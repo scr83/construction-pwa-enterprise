@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
         email: validatedData.email,
         password: hashedPassword,
         role: validatedData.role,
-        company: validatedData.company,
-        phone: validatedData.phone,
+        company: validatedData.company || null,
+        phone: validatedData.phone || null,
         emailVerified: new Date(), // Por simplicidad, marcamos como verificado
       },
       select: {

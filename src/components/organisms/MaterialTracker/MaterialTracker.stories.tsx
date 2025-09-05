@@ -704,7 +704,7 @@ const samplePurchaseOrders: PurchaseOrder[] = [
         { stage: 'Creación', status: 'COMPLETED', date: new Date('2024-03-12'), user: 'comprador-001' },
         { stage: 'Aprobación', status: 'COMPLETED', date: new Date('2024-03-13'), user: 'jefe-compras' },
         { stage: 'Envío a Proveedor', status: 'COMPLETED', date: new Date('2024-03-13'), user: 'comprador-001' },
-        { stage: 'Confirmación', status: 'COMPLETED', date: new Date('2024-03-14', user: 'sup-001' },
+        { stage: 'Confirmación', status: 'COMPLETED', date: new Date('2024-03-14'), user: 'sup-001' },
         { stage: 'En Tránsito', status: 'PENDING' },
         { stage: 'Entrega', status: 'PENDING' }
       ]

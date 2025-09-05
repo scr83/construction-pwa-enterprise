@@ -114,7 +114,7 @@ export default function DashboardPage() {
       titulo: 'Margen EBITDA',
       valor: 18.5,
       tipo: 'porcentaje' as const,
-      estado: 'excelente' as const,
+      estado: 'bueno' as const,
       ultimaActualizacion: new Date().toISOString()
     }
   ] : role === 'jefe_terreno' ? [

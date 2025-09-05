@@ -177,9 +177,9 @@ export const Interactive: Story = {
         location="Edificio B, Piso 1"
         assignedTo="Roberto Chen"
         lastUpdated={new Date(Date.now() - 30 * 60 * 1000)}
-        quantity={12.5,
+        quantity={12.5}
         unit="m³"
-        interactive
+        interactive={true}
         onCardClick={() => alert('Navegando a detalles de EA-10')}
         actionLabel="Iniciar Faena"
         onActionClick={() => alert('Iniciando trabajo en EA-10')}

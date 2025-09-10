@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react'
 import { NavigationBar } from '@/components/organisms/NavigationBar'
-import { Card } from '@/components/atoms/Card'
 import { Button } from '@/components/atoms/Button'
 import { Badge } from '@/components/atoms/Badge'
 import { useSearchParams } from 'next/navigation'

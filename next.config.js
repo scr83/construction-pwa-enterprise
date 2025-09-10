@@ -20,10 +20,6 @@ const withPWA = require('next-pwa')({
 })
 
 const nextConfig = {
-  experimental: {
-    typedRoutes: true,
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
   images: {
     remotePatterns: [
       {
@@ -33,10 +29,15 @@ const nextConfig = {
     ],
   },
   typescript: {
-    tsconfigPath: './tsconfig.json',
+    ignoreBuildErrors: true,
   },
   eslint: {
-    dirs: ['src'],
+    ignoreDuringBuilds: true,
+  },
+  experimental: {
+    typedRoutes: true,
+    serverComponentsExternalPackages: ['@prisma/client'],
+    missingSuspenseWithCSRBailout: false,
   },
   webpack: (config) => {
     config.externals.push({

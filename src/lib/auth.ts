@@ -38,7 +38,7 @@ export const registerSchema = z.object({
 
 // Función para hashear contraseñas
 export const hashPassword = async (password: string): Promise<string> => {
-  return await bcrypt.hash(password, 12)
+  return await bcrypt.hash(password, 10)
 }
 
 // Función para verificar contraseñas
@@ -65,49 +65,90 @@ export const authOptions: NextAuthOptions = {
         }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email y contraseña son requeridos')
-        }
+        try {
+          console.log('🔐 [AUTH] Starting authorization for:', credentials?.email)
+          
+          if (!credentials?.email || !credentials?.password) {
+            console.log('❌ [AUTH] Missing credentials')
+            throw new Error('Email y contraseña son requeridos')
+          }
 
-        // Validar entrada
-        const validatedFields = loginSchema.safeParse({
-          email: credentials.email,
-          password: credentials.password,
-        })
+          // Validar entrada
+          const validatedFields = loginSchema.safeParse({
+            email: credentials.email,
+            password: credentials.password,
+          })
 
-        if (!validatedFields.success) {
-          throw new Error('Credenciales inválidas')
-        }
+          if (!validatedFields.success) {
+            console.log('❌ [AUTH] Validation failed:', validatedFields.error)
+            throw new Error('Credenciales inválidas')
+          }
 
-        // Buscar usuario en base de datos
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
+          console.log('🔍 [AUTH] Searching for user in database:', credentials.email)
+          
+          // Buscar usuario en base de datos
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+            select: {
+              id: true,
+              email: true,
+              password: true,
+              name: true,
+              role: true,
+              company: true,
+              image: true,
+              isActive: true,
+              emailVerified: true,
+            }
+          })
 
-        if (!user || !user.password) {
-          throw new Error('Usuario no encontrado')
-        }
+          if (!user) {
+            console.log('❌ [AUTH] User not found:', credentials.email)
+            throw new Error('Usuario no encontrado')
+          }
 
-        // Verificar contraseña
-        const isPasswordValid = await verifyPassword(credentials.password, user.password)
-        
-        if (!isPasswordValid) {
-          throw new Error('Contraseña incorrecta')
-        }
+          if (!user.password) {
+            console.log('❌ [AUTH] User has no password:', credentials.email)
+            throw new Error('Usuario no encontrado')
+          }
 
-        // Verificar que el usuario esté activo
-        if (!user.emailVerified) {
-          // En producción podrías querer verificar email
-          // Por ahora permitimos usuarios sin verificar
-        }
+          console.log('✅ [AUTH] User found:', { 
+            id: user.id, 
+            email: user.email, 
+            role: user.role,
+            isActive: user.isActive 
+          })
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role as UserRole,
-          company: user.company,
-          image: user.image,
+          // Verificar contraseña
+          console.log('🔐 [AUTH] Verifying password...')
+          const isPasswordValid = await verifyPassword(credentials.password, user.password)
+          
+          if (!isPasswordValid) {
+            console.log('❌ [AUTH] Password verification failed for:', credentials.email)
+            throw new Error('Contraseña incorrecta')
+          }
+
+          console.log('✅ [AUTH] Password verified successfully')
+
+          // Verificar que el usuario esté activo
+          if (user.isActive === false) {
+            console.log('❌ [AUTH] User is inactive:', credentials.email)
+            throw new Error('Usuario inactivo')
+          }
+
+          console.log('✅ [AUTH] Authorization successful for:', credentials.email)
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role as UserRole,
+            company: user.company,
+            image: user.image,
+          }
+        } catch (error) {
+          console.error('🚨 [AUTH] Authorization error:', error)
+          throw error
         }
       }
     })
@@ -139,7 +180,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development',
+  debug: true, // Temporarily enable debug in production
 }
 
 // Función helper para obtener rol en español

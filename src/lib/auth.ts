@@ -43,7 +43,19 @@ export const hashPassword = async (password: string): Promise<string> => {
 
 // Función para verificar contraseñas
 export const verifyPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
-  return await bcrypt.compare(password, hashedPassword)
+  console.log('🔐 VERIFY_PASSWORD: Starting password verification')
+  console.log('🔐 VERIFY_PASSWORD: Plain password length:', password.length)
+  console.log('🔐 VERIFY_PASSWORD: Hash length:', hashedPassword.length)
+  console.log('🔐 VERIFY_PASSWORD: Hash format check - starts with $2:', hashedPassword.startsWith('$2'))
+  
+  try {
+    const result = await bcrypt.compare(password, hashedPassword)
+    console.log('🔐 VERIFY_PASSWORD: Comparison result:', result)
+    return result
+  } catch (error) {
+    console.error('🚨 VERIFY_PASSWORD: bcrypt.compare error:', error)
+    throw error
+  }
 }
 
 // Configuración de NextAuth
@@ -66,28 +78,47 @@ export const authOptions: NextAuthOptions = {
         }
       },
       async authorize(credentials) {
+        console.log('🔐 AUTHORIZE: ====== FUNCTION ENTRY ======')
+        console.log('🔐 AUTHORIZE: Starting authentication for:', credentials?.email)
+        console.log('🔐 AUTHORIZE: Credentials object:', { 
+          hasEmail: !!credentials?.email, 
+          hasPassword: !!credentials?.password,
+          emailLength: credentials?.email?.length || 0
+        })
+        
         try {
-          console.log('🔐 [AUTH] Starting authorization for:', credentials?.email)
-          
+          // Step 1: Basic validation
+          console.log('🔐 AUTHORIZE: Step 1 - Validating credentials...')
           if (!credentials?.email || !credentials?.password) {
-            console.log('❌ [AUTH] Missing credentials')
-            throw new Error('Email y contraseña son requeridos')
+            console.log('❌ AUTHORIZE: Missing credentials - email:', !!credentials?.email, 'password:', !!credentials?.password)
+            return null // Return null instead of throwing for NextAuth
           }
 
-          // Validar entrada
+          // Step 2: Schema validation
+          console.log('🔐 AUTHORIZE: Step 2 - Schema validation...')
           const validatedFields = loginSchema.safeParse({
             email: credentials.email,
             password: credentials.password,
           })
 
           if (!validatedFields.success) {
-            console.log('❌ [AUTH] Validation failed:', validatedFields.error)
-            throw new Error('Credenciales inválidas')
+            console.log('❌ AUTHORIZE: Schema validation failed:', validatedFields.error.errors)
+            return null
+          }
+          console.log('✅ AUTHORIZE: Schema validation passed')
+
+          // Step 3: Test database connection
+          console.log('🔐 AUTHORIZE: Step 3 - Testing database connection...')
+          try {
+            await prisma.$connect()
+            console.log('✅ AUTHORIZE: Database connection successful')
+          } catch (dbError) {
+            console.error('❌ AUTHORIZE: Database connection failed:', dbError)
+            return null
           }
 
-          console.log('🔍 [AUTH] Searching for user in database:', credentials.email)
-          
-          // Buscar usuario en base de datos
+          // Step 4: Query user
+          console.log('🔐 AUTHORIZE: Step 4 - Querying database for user:', credentials.email)
           const user = await prisma.user.findUnique({
             where: { email: credentials.email },
             select: {
@@ -103,54 +134,76 @@ export const authOptions: NextAuthOptions = {
             }
           })
 
+          console.log('🔐 AUTHORIZE: Database query completed. User found:', !!user)
+          if (user) {
+            console.log('🔐 AUTHORIZE: User details:', { 
+              id: user.id, 
+              email: user.email, 
+              role: user.role,
+              isActive: user.isActive,
+              hasPassword: !!user.password
+            })
+          }
+
           if (!user) {
-            console.log('❌ [AUTH] User not found:', credentials.email)
-            throw new Error('Usuario no encontrado')
+            console.log('❌ AUTHORIZE: User not found in database for email:', credentials.email)
+            return null
           }
 
           if (!user.password) {
-            console.log('❌ [AUTH] User has no password:', credentials.email)
-            throw new Error('Usuario no encontrado')
+            console.log('❌ AUTHORIZE: User exists but has no password field')
+            return null
           }
 
-          console.log('✅ [AUTH] User found:', { 
-            id: user.id, 
-            email: user.email, 
-            role: user.role,
-            isActive: user.isActive 
-          })
-
-          // Verificar contraseña
-          console.log('🔐 [AUTH] Verifying password...')
-          const isPasswordValid = await verifyPassword(credentials.password, user.password)
+          // Step 5: Password verification
+          console.log('🔐 AUTHORIZE: Step 5 - Starting password verification...')
+          console.log('🔐 AUTHORIZE: Provided password length:', credentials.password.length)
+          console.log('🔐 AUTHORIZE: Stored hash length:', user.password.length)
+          console.log('🔐 AUTHORIZE: Hash starts with:', user.password.substring(0, 7))
+          
+          let isPasswordValid = false
+          try {
+            isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+            console.log('🔐 AUTHORIZE: bcrypt.compare result:', isPasswordValid)
+          } catch (bcryptError) {
+            console.error('❌ AUTHORIZE: bcrypt.compare error:', bcryptError)
+            return null
+          }
           
           if (!isPasswordValid) {
-            console.log('❌ [AUTH] Password verification failed for:', credentials.email)
-            throw new Error('Contraseña incorrecta')
+            console.log('❌ AUTHORIZE: Password verification failed')
+            return null
           }
+          console.log('✅ AUTHORIZE: Password verification successful')
 
-          console.log('✅ [AUTH] Password verified successfully')
-
-          // Verificar que el usuario esté activo
+          // Step 6: Check user status
+          console.log('🔐 AUTHORIZE: Step 6 - Checking user status...')
           if (user.isActive === false) {
-            console.log('❌ [AUTH] User is inactive:', credentials.email)
-            throw new Error('Usuario inactivo')
+            console.log('❌ AUTHORIZE: User account is inactive')
+            return null
           }
+          console.log('✅ AUTHORIZE: User is active')
 
+          // Step 7: Construct return object
+          console.log('🔐 AUTHORIZE: Step 7 - Constructing user object...')
           const authUser = {
             id: user.id,
             email: user.email,
             name: user.name,
             role: user.role as UserRole,
-            company: user.company,
-            image: user.image,
+            company: user.company || null,
+            image: user.image || null,
           }
 
-          console.log('✅ [AUTH] Authorization successful, returning user:', authUser)
+          console.log('🔐 AUTHORIZE: Final user object:', authUser)
+          console.log('🔐 AUTHORIZE: ====== RETURNING USER OBJECT ======')
           return authUser
+          
         } catch (error) {
-          console.error('🚨 [AUTH] Authorization error:', error)
-          throw error
+          console.error('🚨 AUTHORIZE: Unexpected error occurred:', error)
+          console.error('🚨 AUTHORIZE: Error stack:', error.stack)
+          console.log('🔐 AUTHORIZE: ====== RETURNING NULL DUE TO ERROR ======')
+          return null
         }
       }
     })

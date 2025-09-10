@@ -3,6 +3,7 @@
 import { QualityControl } from '@/components/pages/QualityControl'
 import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
 import { useSession } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 
 // Mock data for demonstration
 const mockUsuario = {

@@ -1,7 +1,7 @@
 import { NextAuthOptions, User } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
+// import { PrismaAdapter } from "@next-auth/prisma-adapter" // Not needed for credentials
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
@@ -48,7 +48,8 @@ export const verifyPassword = async (password: string, hashedPassword: string): 
 
 // Configuración de NextAuth
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // CRITICAL FIX: Remove PrismaAdapter when using CredentialsProvider
+  // adapter: PrismaAdapter(prisma), // This conflicts with credentials auth
   providers: [
     CredentialsProvider({
       id: 'credentials',
@@ -136,9 +137,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error('Usuario inactivo')
           }
 
-          console.log('✅ [AUTH] Authorization successful for:', credentials.email)
-
-          return {
+          const authUser = {
             id: user.id,
             email: user.email,
             name: user.name,
@@ -146,6 +145,9 @@ export const authOptions: NextAuthOptions = {
             company: user.company,
             image: user.image,
           }
+
+          console.log('✅ [AUTH] Authorization successful, returning user:', authUser)
+          return authUser
         } catch (error) {
           console.error('🚨 [AUTH] Authorization error:', error)
           throw error
@@ -164,17 +166,49 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }): Promise<JWT> {
+      console.log('🎫 [JWT] JWT callback called', { hasUser: !!user, tokenSub: token.sub })
+      
+      // First time JWT is created (when user signs in)
       if (user) {
+        console.log('🎫 [JWT] Adding user data to token:', { 
+          id: user.id, 
+          email: user.email, 
+          role: user.role 
+        })
+        token.id = user.id
         token.role = user.role
         token.company = user.company
+        token.email = user.email
+        token.name = user.name
       }
+      
+      console.log('🎫 [JWT] Final token:', { 
+        id: token.id, 
+        role: token.role, 
+        email: token.email 
+      })
       return token
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.sub!
+      console.log('👤 [SESSION] Session callback called', { 
+        hasToken: !!token, 
+        tokenId: token.id,
+        sessionUserEmail: session.user?.email 
+      })
+      
+      // Send properties to the client
+      if (token && session.user) {
+        session.user.id = token.id as string
         session.user.role = token.role as UserRole
         session.user.company = token.company as string
+        session.user.email = token.email as string
+        session.user.name = token.name as string
+        
+        console.log('👤 [SESSION] Final session user:', {
+          id: session.user.id,
+          email: session.user.email,
+          role: session.user.role
+        })
       }
       return session
     },

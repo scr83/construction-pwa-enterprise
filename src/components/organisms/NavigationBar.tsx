@@ -28,9 +28,10 @@ interface NavigationBarProps {
 
 export function NavigationBar({ currentUser }: NavigationBarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const pathname = usePathname()
 
-  // Navigation items based on construction workflows
+  // Comprehensive navigation items for construction management
   const navigationItems: NavigationItem[] = [
     {
       label: 'Dashboard',
@@ -73,6 +74,25 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
     }
   ]
 
+  // User menu items
+  const userMenuItems = [
+    {
+      label: 'Mi Perfil',
+      href: '/profile',
+      icon: 'user'
+    },
+    {
+      label: 'Notificaciones',
+      href: '/notifications',
+      icon: 'bell'
+    },
+    {
+      label: 'Configuración',
+      href: '/settings',
+      icon: 'settings'
+    }
+  ]
+
   // Filter navigation items based on user role
   const visibleItems = navigationItems.filter(item => {
     if (!item.roles) return true // Show items without role restrictions
@@ -108,7 +128,7 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
           </div>
 
           {/* Desktop navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-1">
+          <div className="hidden lg:flex lg:items-center lg:space-x-1">
             {visibleItems.map((item) => (
               <Link
                 key={item.href}
@@ -127,35 +147,65 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
             ))}
           </div>
 
-          {/* User menu */}
-          <div className="hidden md:flex md:items-center md:space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <Typography variant="caption" className="font-semibold text-gray-700">
-                  {currentUser.name.charAt(0).toUpperCase()}
-                </Typography>
-              </div>
-              <div className="flex flex-col">
-                <Typography variant="body-small" className="font-medium text-gray-900">
-                  {currentUser.name}
-                </Typography>
-                <Typography variant="caption" className="text-gray-500">
-                  {getRoleLabel(currentUser.role)}
-                </Typography>
-              </div>
+          {/* Desktop user menu */}
+          <div className="hidden lg:flex lg:items-center lg:space-x-4">
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center space-x-2"
+              >
+                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                  <Typography variant="caption" className="font-semibold text-gray-700">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </Typography>
+                </div>
+                <div className="flex flex-col items-start">
+                  <Typography variant="body-small" className="font-medium text-gray-900">
+                    {currentUser.name}
+                  </Typography>
+                  <Typography variant="caption" className="text-gray-500 uppercase">
+                    {getRoleLabel(currentUser.role)}
+                  </Typography>
+                </div>
+                <Icon name="chevron-down" size="xs" className="text-gray-400" />
+              </Button>
+
+              {/* User dropdown menu */}
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                  <div className="py-1">
+                    {userMenuItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Icon name={item.icon} size="xs" className="mr-3 text-gray-400" />
+                        {item.label}
+                      </Link>
+                    ))}
+                    <hr className="my-1" />
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false)
+                        handleLogout()
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <Icon name="log-out" size="xs" className="mr-3 text-gray-400" />
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              leftIcon={<Icon name="log-out" size="xs" />}
-            >
-              Cerrar Sesión
-            </Button>
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <Button
               variant="ghost"
               size="sm"
@@ -168,7 +218,8 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
 
         {/* Mobile navigation menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-gray-200">
+          <div className="lg:hidden border-t border-gray-200">
+            {/* Navigation items */}
             <div className="px-2 pt-2 pb-3 space-y-1">
               {visibleItems.map((item) => (
                 <Link
@@ -191,7 +242,8 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
             
             {/* Mobile user section */}
             <div className="pt-4 pb-3 border-t border-gray-200">
-              <div className="flex items-center px-5">
+              {/* User info */}
+              <div className="flex items-center px-5 mb-3">
                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                   <Typography variant="body-default" className="font-semibold text-gray-700">
                     {currentUser.name.charAt(0).toUpperCase()}
@@ -206,21 +258,44 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
                   </Typography>
                 </div>
               </div>
-              <div className="mt-3 px-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  leftIcon={<Icon name="log-out" size="xs" />}
-                  className="w-full justify-start"
+
+              {/* User menu items */}
+              <div className="space-y-1 px-2">
+                {userMenuItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Icon name={item.icon} size="sm" className="mr-3" />
+                    {item.label}
+                  </Link>
+                ))}
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    handleLogout()
+                  }}
+                  className="flex items-center w-full px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 >
+                  <Icon name="log-out" size="sm" className="mr-3" />
                   Cerrar Sesión
-                </Button>
+                </button>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Click outside handler for user menu */}
+      {isUserMenuOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsUserMenuOpen(false)}
+        />
+      )}
     </nav>
   )
 }

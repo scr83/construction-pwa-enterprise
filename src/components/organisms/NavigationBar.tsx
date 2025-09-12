@@ -31,6 +31,9 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const pathname = usePathname()
 
+  // Map authentication roles to internal roles
+  const normalizedRole = normalizeRole(currentUser.role)
+
   // Comprehensive navigation items for construction management
   const navigationItems: NavigationItem[] = [
     {
@@ -39,7 +42,7 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
       icon: 'home'
     },
     {
-      label: 'Proyectos',
+      label: 'Proyectos', 
       href: '/projects',
       icon: 'folder'
     },
@@ -47,25 +50,25 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
       label: 'Tareas',
       href: '/tasks',
       icon: 'check-square',
-      roles: ['gerencia', 'jefe_terreno', 'oficina_tecnica']
+      roles: ['admin', 'gerencia', 'jefe_terreno', 'site_manager', 'oficina_tecnica']
     },
     {
       label: 'Materiales',
       href: '/materials',
       icon: 'package',
-      roles: ['gerencia', 'bodega', 'jefe_terreno']
+      roles: ['admin', 'gerencia', 'bodega', 'jefe_terreno', 'site_manager']
     },
     {
       label: 'Equipo',
       href: '/team',
       icon: 'users',
-      roles: ['gerencia', 'jefe_terreno']
+      roles: ['admin', 'gerencia', 'jefe_terreno', 'site_manager']
     },
     {
       label: 'Calidad',
       href: '/quality',
       icon: 'shield-check',
-      roles: ['gerencia', 'control_calidad', 'oficina_tecnica']
+      roles: ['admin', 'gerencia', 'control_calidad', 'quality_control', 'oficina_tecnica']
     },
     {
       label: 'Reportes',
@@ -74,7 +77,7 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
     }
   ]
 
-  // User menu items
+  // User menu items - always visible
   const userMenuItems = [
     {
       label: 'Mi Perfil',
@@ -93,10 +96,13 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
     }
   ]
 
-  // Filter navigation items based on user role
+  // Filter navigation items based on user role (more permissive)
   const visibleItems = navigationItems.filter(item => {
     if (!item.roles) return true // Show items without role restrictions
-    return item.roles.includes(currentUser.role)
+    
+    // Check both original and normalized roles
+    return item.roles.includes(normalizedRole) || 
+           item.roles.includes(currentUser.role.toLowerCase())
   })
 
   const isActiveLink = (href: string) => {
@@ -300,15 +306,35 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
   )
 }
 
+// Helper function to normalize different role formats
+function normalizeRole(role: string): string {
+  const roleMap: Record<string, string> = {
+    'SITE_MANAGER': 'jefe_terreno',
+    'QUALITY_CONTROL': 'control_calidad',
+    'WAREHOUSE': 'bodega',
+    'EXECUTIVE': 'gerencia',
+    'ADMIN': 'admin',
+    'TECHNICAL': 'oficina_tecnica'
+  }
+  
+  return roleMap[role.toUpperCase()] || role.toLowerCase()
+}
+
 // Helper function to get role labels in Spanish
 function getRoleLabel(role: string): string {
   const roleLabels: Record<string, string> = {
-    gerencia: 'Gerencia',
-    jefe_terreno: 'Jefe de Terreno',
-    bodega: 'Bodega',
-    oficina_tecnica: 'Oficina Técnica',
-    control_calidad: 'Inspector de Calidad',
-    admin: 'Administrador'
+    'SITE_MANAGER': 'Jefe de Terreno',
+    'QUALITY_CONTROL': 'Inspector de Calidad',
+    'WAREHOUSE': 'Bodega',
+    'EXECUTIVE': 'Gerencia', 
+    'ADMIN': 'Administrador',
+    'TECHNICAL': 'Oficina Técnica',
+    'gerencia': 'Gerencia',
+    'jefe_terreno': 'Jefe de Terreno',
+    'bodega': 'Bodega',
+    'oficina_tecnica': 'Oficina Técnica',
+    'control_calidad': 'Inspector de Calidad',
+    'admin': 'Administrador'
   }
   
   return roleLabels[role] || role

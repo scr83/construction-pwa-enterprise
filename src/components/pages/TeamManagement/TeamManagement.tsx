@@ -293,29 +293,43 @@ export function TeamManagement({
   const [selectedTeam, setSelectedTeam] = useState<ConstructionTeam | null>(null)
   const [viewMode, setViewMode] = useState<'equipos' | 'miembros'>('equipos')
   
+  console.log('🔍 TeamManagement component rendered with:', { usuario, equipos: equipos?.length })
+  
   const searchParams = useSearchParams()
-  const currentRole = searchParams.get('role') || usuario.rol
+  const currentRole = searchParams.get('role') || usuario?.rol || 'jefe_terreno'
 
-  // Estadísticas de equipos
+  // Estadísticas de equipos - with defensive coding
   const teamStats = useMemo(() => {
+    if (!equipos || !Array.isArray(equipos)) {
+      console.log('⚠️ Equipos is not an array:', equipos)
+      return { totalEquipos: 0, equiposActivos: 0, totalMiembros: 0, miembrosActivos: 0, promedioProductividad: 0 }
+    }
+    
     const totalEquipos = equipos.length
-    const equiposActivos = equipos.filter(e => e.status === 'activo').length
-    const totalMiembros = equipos.reduce((sum, team) => sum + team.members.length, 0)
+    const equiposActivos = equipos.filter(e => e?.status === 'activo').length
+    const totalMiembros = equipos.reduce((sum, team) => sum + (team?.members?.length || 0), 0)
     const miembrosActivos = equipos.reduce((sum, team) => 
-      sum + team.members.filter(m => m.estado === 'activo').length, 0)
+      sum + (team?.members?.filter(m => m?.estado === 'activo')?.length || 0), 0)
     const promedioProductividad = equipos.length > 0 ? 
-      Math.round(equipos.reduce((sum, team) => sum + team.productivity, 0) / equipos.length) : 0
+      Math.round(equipos.reduce((sum, team) => sum + (team?.productivity || 0), 0) / equipos.length) : 0
 
+    console.log('📊 Team stats:', { totalEquipos, equiposActivos, totalMiembros, miembrosActivos, promedioProductividad })
     return { totalEquipos, equiposActivos, totalMiembros, miembrosActivos, promedioProductividad }
   }, [equipos])
 
-  // Filtros de equipos
+  // Filtros de equipos - with defensive coding
   const filteredTeams = useMemo(() => {
+    if (!equipos || !Array.isArray(equipos)) {
+      console.log('⚠️ Cannot filter - equipos is not an array:', equipos)
+      return []
+    }
+    
     return equipos.filter(team => {
-      const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          team.supervisor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          team.currentProject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          team.members.some(m => m.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+      if (!team) return false
+      const matchesSearch = (team.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (team.supervisor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (team.currentProject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (team.members || []).some(m => (m?.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()))
       
       const matchesStatus = selectedStatus === 'todos' || team.status === selectedStatus
       const matchesDepartment = selectedDepartment === 'todos' || team.department === selectedDepartment

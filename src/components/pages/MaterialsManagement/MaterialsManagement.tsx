@@ -205,30 +205,45 @@ export function MaterialsManagement({
   const [selectedCategory, setSelectedCategory] = useState<MaterialCategory | 'todas'>('todas')
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialKit | null>(null)
   
+  console.log('🔍 MaterialsManagement component rendered with:', { usuario, materiales: materiales?.length })
+  
   const searchParams = useSearchParams()
-  const currentRole = searchParams.get('role') || usuario.rol
+  const currentRole = searchParams.get('role') || usuario?.rol || 'jefe_terreno'
 
-  // Estadísticas de materiales
+  // Estadísticas de materiales - with defensive coding
   const materialStats = useMemo(() => {
+    if (!materiales || !Array.isArray(materiales)) {
+      console.log('⚠️ Materiales is not an array:', materiales)
+      return { total: 0, disponibles: 0, enTransito: 0, solicitados: 0, agotados: 0, valorTotal: 0 }
+    }
+    
     const total = materiales.length
-    const disponibles = materiales.filter(m => m.status === 'disponible').length
-    const enTransito = materiales.filter(m => m.status === 'en_transito').length
-    const solicitados = materiales.filter(m => m.status === 'solicitado').length
-    const agotados = materiales.filter(m => m.status === 'agotado').length
+    const disponibles = materiales.filter(m => m?.status === 'disponible').length
+    const enTransito = materiales.filter(m => m?.status === 'en_transito').length
+    const solicitados = materiales.filter(m => m?.status === 'solicitado').length
+    const agotados = materiales.filter(m => m?.status === 'agotado').length
     
     // Calcular valor total
-    const valorTotal = materiales.reduce((sum, m) => sum + (m.actualCost || m.estimatedCost || 0), 0)
+    const valorTotal = materiales.reduce((sum, m) => sum + (m?.actualCost || m?.estimatedCost || 0), 0)
 
+    console.log('📊 Material stats:', { total, disponibles, enTransito, solicitados, agotados, valorTotal })
     return { total, disponibles, enTransito, solicitados, agotados, valorTotal }
   }, [materiales])
 
-  // Filtros de materiales
+  // Filtros de materiales - with defensive coding
   const filteredMaterials = useMemo(() => {
+    if (!materiales || !Array.isArray(materiales)) {
+      console.log('⚠️ Cannot filter - materiales is not an array:', materiales)
+      return []
+    }
+    
     return materiales.filter(material => {
-      const matchesSearch = material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          material.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          material.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          material.supplier?.toLowerCase().includes(searchTerm.toLowerCase())
+      if (!material) return false
+      
+      const matchesSearch = (material.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (material.building || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (material.requestedBy || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (material.supplier || '').toLowerCase().includes(searchTerm.toLowerCase())
       
       const matchesStatus = selectedStatus === 'todos' || material.status === selectedStatus
       const matchesCategory = selectedCategory === 'todas' || material.category === selectedCategory

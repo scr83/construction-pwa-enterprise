@@ -172,32 +172,47 @@ export function TaskManagement({
   onTaskUpdate,
   onTaskDelete
 }: TaskManagementProps) {
+  console.log('🔍 TaskManagement component rendered with:', { usuario, tareas: tareas?.length })
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | 'todos'>('todos')
   const [selectedPriority, setSelectedPriority] = useState<TaskPriority | 'todas'>('todas')
   const [selectedTask, setSelectedTask] = useState<ConstructionTask | null>(null)
   
   const searchParams = useSearchParams()
-  const currentRole = searchParams.get('role') || usuario.rol
+  const currentRole = searchParams.get('role') || usuario?.rol || 'jefe_terreno'
 
-  // Estadísticas de tareas
+  // Estadísticas de tareas - with defensive coding
   const taskStats = useMemo(() => {
+    if (!tareas || !Array.isArray(tareas)) {
+      console.log('⚠️ Tareas is not an array:', tareas)
+      return { total: 0, completadas: 0, enProgreso: 0, retrasadas: 0, programadas: 0 }
+    }
+    
     const total = tareas.length
-    const completadas = tareas.filter(t => t.status === 'completado').length
-    const enProgreso = tareas.filter(t => t.status === 'en_progreso').length
-    const retrasadas = tareas.filter(t => t.status === 'retrasado').length
-    const programadas = tareas.filter(t => t.status === 'programado').length
+    const completadas = tareas.filter(t => t?.status === 'completado').length
+    const enProgreso = tareas.filter(t => t?.status === 'en_progreso').length
+    const retrasadas = tareas.filter(t => t?.status === 'retrasado').length
+    const programadas = tareas.filter(t => t?.status === 'programado').length
 
+    console.log('📊 Task stats:', { total, completadas, enProgreso, retrasadas, programadas })
     return { total, completadas, enProgreso, retrasadas, programadas }
   }, [tareas])
 
-  // Filtros de tareas
+  // Filtros de tareas - with defensive coding
   const filteredTasks = useMemo(() => {
+    if (!tareas || !Array.isArray(tareas)) {
+      console.log('⚠️ Cannot filter - tareas is not an array:', tareas)
+      return []
+    }
+    
     return tareas.filter(task => {
-      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          task.partida.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          task.assignedTo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          task.building.toLowerCase().includes(searchTerm.toLowerCase())
+      if (!task) return false
+      
+      const matchesSearch = (task.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (task.partida || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (task.assignedTo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (task.building || '').toLowerCase().includes(searchTerm.toLowerCase())
       
       const matchesStatus = selectedStatus === 'todos' || task.status === selectedStatus
       const matchesPriority = selectedPriority === 'todas' || task.priority === selectedPriority
@@ -213,10 +228,11 @@ export function TaskManagement({
   const canEditTasks = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('editar_tareas')) || 
                       ['gerencia', 'jefe_terreno'].includes(currentRole)
 
-  return (
-    <div className="p-4 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  try {
+    return (
+      <div className="p-4 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <Typography variant="h3" className="font-bold text-gray-900">
             Gestión de Tareas
@@ -439,5 +455,17 @@ export function TaskManagement({
         </div>
       )}
     </div>
-  )
+    )
+  } catch (error) {
+    console.error('💥 TaskManagement render error:', error)
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="font-bold text-red-800 mb-2">Error en TaskManagement</h3>
+          <p className="text-red-700 text-sm">{error instanceof Error ? error.message : 'Error desconocido'}</p>
+          <p className="text-red-600 text-xs mt-2">Revisa la consola para más detalles.</p>
+        </div>
+      </div>
+    )
+  }
 }

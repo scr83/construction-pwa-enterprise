@@ -382,16 +382,22 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
               <Icon name={isMobileMenuOpen ? 'x' : 'menu'} size="sm" />
             </Button>
             
-            {/* Logo */}
+            {/* Logo - clickable */}
             {showLogo && (
-              <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const roleQuery = currentRole ? `?role=${currentRole}` : ''
+                  router.push(`/dashboard${roleQuery}`)
+                }}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+              >
                 {logo || <Icon name="hard-hat" size="lg" className="text-primary-600" />}
                 {!compactMode && (
                   <Typography variant="h6" className="font-bold hidden sm:block">
                     ConstructorApp
                   </Typography>
                 )}
-              </div>
+              </button>
             )}
             
             {/* Current Project Selector */}

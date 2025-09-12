@@ -172,7 +172,6 @@ export function TaskManagement({
   onTaskUpdate,
   onTaskDelete
 }: TaskManagementProps) {
-  console.log('🔍 TaskManagement component rendered with:', { usuario, tareas: tareas?.length })
   
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | 'todos'>('todos')
@@ -185,7 +184,6 @@ export function TaskManagement({
   // Estadísticas de tareas - with defensive coding
   const taskStats = useMemo(() => {
     if (!tareas || !Array.isArray(tareas)) {
-      console.log('⚠️ Tareas is not an array:', tareas)
       return { total: 0, completadas: 0, enProgreso: 0, retrasadas: 0, programadas: 0 }
     }
     
@@ -195,14 +193,12 @@ export function TaskManagement({
     const retrasadas = tareas.filter(t => t?.status === 'retrasado').length
     const programadas = tareas.filter(t => t?.status === 'programado').length
 
-    console.log('📊 Task stats:', { total, completadas, enProgreso, retrasadas, programadas })
     return { total, completadas, enProgreso, retrasadas, programadas }
   }, [tareas])
 
   // Filtros de tareas - with defensive coding
   const filteredTasks = useMemo(() => {
     if (!tareas || !Array.isArray(tareas)) {
-      console.log('⚠️ Cannot filter - tareas is not an array:', tareas)
       return []
     }
     

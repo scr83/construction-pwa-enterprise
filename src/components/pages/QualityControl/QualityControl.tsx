@@ -361,8 +361,8 @@ export function QualityControl({
     let resultado = inspecciones
 
     // Filtrar por proyectos asignados
-    if (!usuario.permisos.includes('ver_todas_inspecciones')) {
-      resultado = resultado.filter(i => usuario.proyectosAsignados.includes(i.proyectoId))
+    if (!(usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('ver_todas_inspecciones'))) {
+      resultado = resultado.filter(i => usuario?.proyectosAsignados?.includes?.(i.proyectoId))
     }
 
     // Aplicar filtros

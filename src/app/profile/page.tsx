@@ -1,6 +1,6 @@
 'use client'
 
-import { NavigationBar } from '@/components/organisms/NavigationBar'
+import { ProtectedLayout } from "@/components/layouts/ProtectedLayout"
 import { Card } from '@/components/atoms/Card'
 import { Button } from '@/components/atoms/Button'
 import { Avatar } from '@/components/atoms/Avatar'
@@ -38,16 +38,7 @@ export default function ProfilePage() {
   const userInfo = getUserInfo(role)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavigationBar 
-        currentUser={{
-          id: 'user-1',
-          name: userInfo.name,
-          role: role === 'gerencia' ? 'EXECUTIVE' : 'SITE_MANAGER',
-          isOnline: true
-        }}
-      />
-      
+    <ProtectedLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Mi Perfil</h1>
@@ -163,6 +154,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }

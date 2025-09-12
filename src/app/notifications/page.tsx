@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { NavigationBar } from '@/components/organisms/NavigationBar'
+import { ProtectedLayout } from "@/components/layouts/ProtectedLayout"
 import { Button } from '@/components/atoms/Button'
 import { Badge } from '@/components/atoms/Badge'
 import { useSearchParams } from 'next/navigation'
@@ -188,16 +188,7 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter(n => !n.read).length
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavigationBar 
-        currentUser={{
-          id: 'user-1',
-          name: 'Juan Pérez',
-          role: role === 'gerencia' ? 'EXECUTIVE' : 'SITE_MANAGER',
-          isOnline: true
-        }}
-      />
-      
+    <ProtectedLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8">
@@ -375,6 +366,6 @@ export default function NotificationsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }

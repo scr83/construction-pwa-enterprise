@@ -1,6 +1,6 @@
 'use client'
 
-import { NavigationBar } from '@/components/organisms/NavigationBar'
+import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
 import { Card } from '@/components/atoms/Card'
 import { Button } from '@/components/atoms/Button'
 import { useSearchParams } from 'next/navigation'
@@ -10,16 +10,7 @@ export default function HelpPage() {
   const role = searchParams.get('role') || 'jefe_terreno'
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavigationBar 
-        currentUser={{
-          id: 'user-1',
-          name: 'Juan Pérez',
-          role: role === 'gerencia' ? 'EXECUTIVE' : 'SITE_MANAGER',
-          isOnline: true
-        }}
-      />
-      
+    <ProtectedLayout>
       <div className="max-w-4xl mx-auto p-6">
         <Card className="p-8">
           <div className="text-center">
@@ -74,6 +65,6 @@ export default function HelpPage() {
           </div>
         </Card>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }

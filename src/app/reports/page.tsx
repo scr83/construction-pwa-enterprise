@@ -1,7 +1,7 @@
 'use client'
 
 import { Reports } from '@/components/pages/Reports'
-import { NavigationBar } from '@/components/organisms/NavigationBar'
+import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
 import { useSearchParams } from 'next/navigation'
 
 // Mock data for demonstration
@@ -133,18 +133,7 @@ export default function ReportsPage() {
   ] : []
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavigationBar 
-        currentUser={{
-          id: usuario.id,
-          name: usuario.nombre,
-          role: usuario.rol === 'gerencia' ? 'EXECUTIVE' : 
-                usuario.rol === 'jefe_terreno' ? 'SITE_MANAGER' :
-                usuario.rol === 'oficina_tecnica' ? 'SUPERVISOR' :
-                usuario.rol === 'control_calidad' ? 'QUALITY_INSPECTOR' : 'WORKER',
-          isOnline: true
-        }}
-      />
+    <ProtectedLayout>
       <Reports 
         usuario={usuario}
         reportesDefinidos={reportesDefinidosPorRole as any}
@@ -152,6 +141,6 @@ export default function ReportsPage() {
         proyectos={mockProyectos}
         configuracion={mockConfiguracion}
       />
-    </div>
+    </ProtectedLayout>
   )
 }

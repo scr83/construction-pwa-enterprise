@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 // Importar todos los componentes necesarios
 import { ReportTemplate } from '@/components/templates/ReportTemplate'
 import { MobileTemplate } from '@/components/templates/MobileTemplate'
-import { NavigationBar } from '@/components/organisms/NavigationBar'
 import { ReportViewer } from '@/components/organisms/ReportViewer'
 import { MetricDisplay } from '@/components/molecules/MetricDisplay'
 // import { ChartDisplay } from '@/components/molecules/ChartDisplay' // Component not found
@@ -876,8 +875,8 @@ export function Reports({
         }}
         role={usuario.rol}
         permissions={{
-          canExport: usuario.permisos.includes('exportar_reportes'),
-          canShare: usuario.permisos.includes('compartir_reportes')
+          canExport: usuario?.permisos?.includes?.('exportar_reportes') || false,
+          canShare: usuario?.permisos?.includes?.('compartir_reportes') || false
         }}
         companyName={configuracion.nombreEmpresa}
         watermark={configuracion.marcaAgua}
@@ -1120,16 +1119,6 @@ export function Reports({
   // Versión desktop
   return (
     <div className={cn(reportsVariants({ mode, layout, reportType }), className)} {...props}>
-      {/* Navigation Bar */}
-      <NavigationBar 
-        currentUser={{
-          id: usuario.id,
-          name: usuario.nombre,
-          role: 'EXECUTIVE',
-          isOnline: true
-        }}
-      />
-      
       {/* Header de navegación */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { NavigationBar } from '@/components/organisms/NavigationBar'
+import { ProtectedLayout } from "@/components/layouts/ProtectedLayout"
 import { Card } from '@/components/atoms/Card'
 import { Button } from '@/components/atoms/Button'
 import { useSearchParams } from 'next/navigation'
@@ -73,16 +73,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavigationBar 
-        currentUser={{
-          id: 'user-1',
-          name: 'Juan Pérez',
-          role: role === 'gerencia' ? 'EXECUTIVE' : 'SITE_MANAGER',
-          isOnline: true
-        }}
-      />
-      
+    <ProtectedLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Configuración</h1>
@@ -289,6 +280,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }

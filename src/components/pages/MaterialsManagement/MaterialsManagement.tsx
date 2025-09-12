@@ -205,7 +205,6 @@ export function MaterialsManagement({
   const [selectedCategory, setSelectedCategory] = useState<MaterialCategory | 'todas'>('todas')
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialKit | null>(null)
   
-  console.log('🔍 MaterialsManagement component rendered with:', { usuario, materiales: materiales?.length })
   
   const searchParams = useSearchParams()
   const currentRole = searchParams.get('role') || usuario?.rol || 'jefe_terreno'
@@ -213,7 +212,6 @@ export function MaterialsManagement({
   // Estadísticas de materiales - with defensive coding
   const materialStats = useMemo(() => {
     if (!materiales || !Array.isArray(materiales)) {
-      console.log('⚠️ Materiales is not an array:', materiales)
       return { total: 0, disponibles: 0, enTransito: 0, solicitados: 0, agotados: 0, valorTotal: 0 }
     }
     
@@ -226,14 +224,12 @@ export function MaterialsManagement({
     // Calcular valor total
     const valorTotal = materiales.reduce((sum, m) => sum + (m?.actualCost || m?.estimatedCost || 0), 0)
 
-    console.log('📊 Material stats:', { total, disponibles, enTransito, solicitados, agotados, valorTotal })
     return { total, disponibles, enTransito, solicitados, agotados, valorTotal }
   }, [materiales])
 
   // Filtros de materiales - with defensive coding
   const filteredMaterials = useMemo(() => {
     if (!materiales || !Array.isArray(materiales)) {
-      console.log('⚠️ Cannot filter - materiales is not an array:', materiales)
       return []
     }
     

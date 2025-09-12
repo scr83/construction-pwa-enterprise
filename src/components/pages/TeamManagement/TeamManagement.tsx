@@ -293,7 +293,6 @@ export function TeamManagement({
   const [selectedTeam, setSelectedTeam] = useState<ConstructionTeam | null>(null)
   const [viewMode, setViewMode] = useState<'equipos' | 'miembros'>('equipos')
   
-  console.log('🔍 TeamManagement component rendered with:', { usuario, equipos: equipos?.length })
   
   const searchParams = useSearchParams()
   const currentRole = searchParams.get('role') || usuario?.rol || 'jefe_terreno'
@@ -301,7 +300,6 @@ export function TeamManagement({
   // Estadísticas de equipos - with defensive coding
   const teamStats = useMemo(() => {
     if (!equipos || !Array.isArray(equipos)) {
-      console.log('⚠️ Equipos is not an array:', equipos)
       return { totalEquipos: 0, equiposActivos: 0, totalMiembros: 0, miembrosActivos: 0, promedioProductividad: 0 }
     }
     
@@ -313,14 +311,12 @@ export function TeamManagement({
     const promedioProductividad = equipos.length > 0 ? 
       Math.round(equipos.reduce((sum, team) => sum + (team?.productivity || 0), 0) / equipos.length) : 0
 
-    console.log('📊 Team stats:', { totalEquipos, equiposActivos, totalMiembros, miembrosActivos, promedioProductividad })
     return { totalEquipos, equiposActivos, totalMiembros, miembrosActivos, promedioProductividad }
   }, [equipos])
 
   // Filtros de equipos - with defensive coding
   const filteredTeams = useMemo(() => {
     if (!equipos || !Array.isArray(equipos)) {
-      console.log('⚠️ Cannot filter - equipos is not an array:', equipos)
       return []
     }
     
@@ -346,10 +342,10 @@ export function TeamManagement({
   }, [equipos])
 
   // Permisos basados en rol
-  const canManageTeams = usuario.permisos.includes('gestionar_equipos') || 
+  const canManageTeams = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('gestionar_equipos')) || 
                         ['gerencia', 'jefe_terreno', 'oficina_tecnica'].includes(currentRole)
   
-  const canAssignTasks = usuario.permisos.includes('asignar_tareas') || 
+  const canAssignTasks = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('asignar_tareas')) || 
                         ['gerencia', 'jefe_terreno'].includes(currentRole)
 
   return (
@@ -535,7 +531,7 @@ export function TeamManagement({
                 <MemberCard
                   key={`${member.id}-${index}`}
                   member={member}
-                  onClick={() => console.log('Ver detalle del miembro:', member.nombre)}
+                  onClick={() => {}}
                 />
               ))}
             </div>
@@ -605,7 +601,7 @@ export function TeamManagement({
                       <MemberCard
                         key={member.id}
                         member={member}
-                        onClick={() => console.log('Ver detalle del miembro:', member.nombre)}
+                        onClick={() => {}}
                       />
                     ))}
                   </div>

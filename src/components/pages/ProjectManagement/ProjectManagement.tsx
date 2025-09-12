@@ -18,6 +18,11 @@ import { Badge } from '@/components/atoms/Badge'
 import { Avatar } from '@/components/atoms/Avatar'
 import { Input } from '@/components/atoms/Input'
 
+// Helper function to safely check permissions
+const hasPermission = (usuario: any, permission: string): boolean => {
+  return usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes(permission)
+}
+
 // Definir variantes del componente
 export const projectManagementVariants = cva(
   "min-h-screen bg-gray-50",
@@ -334,8 +339,8 @@ export function ProjectManagement({
     let resultado = proyectos
 
     // Filtrar por permisos de usuario
-    if (!usuario.permisos.includes('ver_todos_proyectos')) {
-      resultado = resultado.filter(p => usuario.proyectosAsignados.includes(p.id))
+    if (!hasPermission(usuario, 'ver_todos_proyectos')) {
+      resultado = resultado.filter(p => usuario?.proyectosAsignados?.includes?.(p.id))
     }
 
     // Aplicar filtros de búsqueda
@@ -577,7 +582,7 @@ export function ProjectManagement({
   const accionesDisponibles = useMemo(() => {
     const acciones = []
 
-    if (usuario.permisos.includes('crear_proyecto')) {
+    if (hasPermission(usuario, 'crear_proyecto')) {
       acciones.push({
         id: 'crear',
         label: 'Nuevo Proyecto',
@@ -586,7 +591,7 @@ export function ProjectManagement({
       })
     }
 
-    if (usuario.permisos.includes('exportar_datos')) {
+    if (hasPermission(usuario, 'exportar_datos')) {
       acciones.push({
         id: 'exportar',
         label: 'Exportar',
@@ -595,7 +600,7 @@ export function ProjectManagement({
       })
     }
 
-    if (usuario.permisos.includes('gestionar_equipos')) {
+    if (hasPermission(usuario, 'gestionar_equipos')) {
       acciones.push({
         id: 'equipos',
         label: 'Gestionar Equipos',
@@ -642,13 +647,13 @@ export function ProjectManagement({
           variant: 'secondary' as const,
           onClick: () => handleProyectoSelect(proyecto)
         },
-        ...(usuario.permisos.includes('editar_proyecto') ? [{
+        ...(hasPermission(usuario, 'editar_proyecto') ? [{
           id: 'editar',
           label: 'Editar',
           variant: 'secondary' as const,
           onClick: () => handleEditarProyecto(proyecto)
         }] : []),
-        ...(usuario.permisos.includes('eliminar_proyecto') ? [{
+        ...(hasPermission(usuario, 'eliminar_proyecto') ? [{
           id: 'eliminar',
           label: 'Eliminar',
           variant: 'destructive' as const,
@@ -815,7 +820,7 @@ export function ProjectManagement({
               >
                 {proyectoSeleccionado.prioridad}
               </Badge>
-              {usuario.permisos.includes('editar_proyecto') && (
+              {hasPermission(usuario, 'editar_proyecto') && (
                 <Button 
                   variant="outline" 
                   onClick={() => handleEditarProyecto(proyectoSeleccionado)}
@@ -1043,7 +1048,7 @@ export function ProjectManagement({
           filters={configuracionFiltros}
           enableSearch={true}
           searchPlaceholder="Buscar proyectos..."
-          enableBulkSelect={usuario.permisos.includes('acciones_masivas')}
+          enableBulkSelect={hasPermission(usuario, 'acciones_masivas')}
           actions={accionesDisponibles}
           bulkActions={[
             {
@@ -1073,7 +1078,7 @@ export function ProjectManagement({
           emptyStateTitle="No hay proyectos"
           emptyStateMessage="No se encontraron proyectos que coincidan con los criterios de búsqueda."
           emptyStateAction={
-            usuario.permisos.includes('crear_proyecto') ? {
+            hasPermission(usuario, 'crear_proyecto') ? {
               label: 'Crear Primer Proyecto',
               onClick: handleCrearProyecto
             } : undefined

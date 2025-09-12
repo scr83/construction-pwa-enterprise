@@ -322,10 +322,11 @@ export function TeamManagement({
     
     return equipos.filter(team => {
       if (!team) return false
-      const matchesSearch = (team.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (team.supervisor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (team.currentProject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (team.members || []).some(m => (m?.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()))
+      const safeSearchTerm = (searchTerm || '').toLowerCase()
+      const matchesSearch = (team.name || '').toLowerCase().includes(safeSearchTerm) ||
+                          (team.supervisor || '').toLowerCase().includes(safeSearchTerm) ||
+                          (team.currentProject || '').toLowerCase().includes(safeSearchTerm) ||
+                          (team.members || []).some(m => (m?.nombre || '').toLowerCase().includes(safeSearchTerm))
       
       const matchesStatus = selectedStatus === 'todos' || team.status === selectedStatus
       const matchesDepartment = selectedDepartment === 'todos' || team.department === selectedDepartment
@@ -336,17 +337,18 @@ export function TeamManagement({
 
   // Lista plana de miembros para vista de miembros
   const allMembers = useMemo(() => {
+    if (!equipos || !Array.isArray(equipos)) return []
     return equipos.flatMap(team => 
-      team.members.map(member => ({ ...member, teamName: team.name }))
+      (team?.members || []).map(member => ({ ...member, teamName: team?.name || '' }))
     )
   }, [equipos])
 
   // Permisos basados en rol
   const canManageTeams = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('gestionar_equipos')) || 
-                        ['gerencia', 'jefe_terreno', 'oficina_tecnica'].includes(currentRole)
+                        ['gerencia', 'jefe_terreno', 'oficina_tecnica'].includes(currentRole || '')
   
   const canAssignTasks = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('asignar_tareas')) || 
-                        ['gerencia', 'jefe_terreno'].includes(currentRole)
+                        ['gerencia', 'jefe_terreno'].includes(currentRole || '')
 
   return (
     <div className="p-4 space-y-6">

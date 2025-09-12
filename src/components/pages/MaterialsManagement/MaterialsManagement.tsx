@@ -236,10 +236,11 @@ export function MaterialsManagement({
     return materiales.filter(material => {
       if (!material) return false
       
-      const matchesSearch = (material.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (material.building || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (material.requestedBy || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (material.supplier || '').toLowerCase().includes(searchTerm.toLowerCase())
+      const safeSearchTerm = (searchTerm || '').toLowerCase()
+      const matchesSearch = (material.name || '').toLowerCase().includes(safeSearchTerm) ||
+                          (material.building || '').toLowerCase().includes(safeSearchTerm) ||
+                          (material.requestedBy || '').toLowerCase().includes(safeSearchTerm) ||
+                          (material.supplier || '').toLowerCase().includes(safeSearchTerm)
       
       const matchesStatus = selectedStatus === 'todos' || material.status === selectedStatus
       const matchesCategory = selectedCategory === 'todas' || material.category === selectedCategory
@@ -250,13 +251,13 @@ export function MaterialsManagement({
 
   // Permisos basados en rol - Add defensive checks
   const canRequestMaterials = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('solicitar_materiales')) || 
-                             ['gerencia', 'jefe_terreno', 'bodega', 'oficina_tecnica'].includes(currentRole)
+                             ['gerencia', 'jefe_terreno', 'bodega', 'oficina_tecnica'].includes(currentRole || '')
   
   const canManageMaterials = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('gestionar_materiales')) || 
-                           ['gerencia', 'bodega'].includes(currentRole)
+                           ['gerencia', 'bodega'].includes(currentRole || '')
 
   const canApproveMaterials = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('aprobar_materiales')) || 
-                            ['gerencia', 'oficina_tecnica'].includes(currentRole)
+                            ['gerencia', 'oficina_tecnica'].includes(currentRole || '')
 
   return (
     <div className="p-4 space-y-6">

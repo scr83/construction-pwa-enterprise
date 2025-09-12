@@ -205,10 +205,11 @@ export function TaskManagement({
     return tareas.filter(task => {
       if (!task) return false
       
-      const matchesSearch = (task.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (task.partida || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (task.assignedTo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (task.building || '').toLowerCase().includes(searchTerm.toLowerCase())
+      const safeSearchTerm = (searchTerm || '').toLowerCase()
+      const matchesSearch = (task.title || '').toLowerCase().includes(safeSearchTerm) ||
+                          (task.partida || '').toLowerCase().includes(safeSearchTerm) ||
+                          (task.assignedTo || '').toLowerCase().includes(safeSearchTerm) ||
+                          (task.building || '').toLowerCase().includes(safeSearchTerm)
       
       const matchesStatus = selectedStatus === 'todos' || task.status === selectedStatus
       const matchesPriority = selectedPriority === 'todas' || task.priority === selectedPriority
@@ -219,10 +220,10 @@ export function TaskManagement({
 
   // Permisos basados en rol - Add defensive checks
   const canCreateTasks = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('crear_tareas')) || 
-                        ['gerencia', 'jefe_terreno', 'oficina_tecnica'].includes(currentRole)
+                        ['gerencia', 'jefe_terreno', 'oficina_tecnica'].includes(currentRole || '')
   
   const canEditTasks = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('editar_tareas')) || 
-                      ['gerencia', 'jefe_terreno'].includes(currentRole)
+                      ['gerencia', 'jefe_terreno'].includes(currentRole || '')
 
   try {
     return (

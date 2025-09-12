@@ -33,8 +33,19 @@ const mockConfiguracion = {
 }
 
 export default function QualityPage() {
+  console.log('🔍 QUALITY PAGE LOADING:', {
+    component: 'QualityPage',
+    timestamp: new Date().toISOString(),
+    url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+  })
+
   const searchParams = useSearchParams()
   const role = searchParams.get('role') || 'control_calidad'
+  
+  console.log('🔍 QUALITY PAGE SESSION & ROLE:', {
+    role: role,
+    searchParamsRole: searchParams.get('role')
+  })
   
   // Personalizar usuario según rol
   const usuario = {
@@ -48,6 +59,13 @@ export default function QualityPage() {
       ['ver_inspecciones', 'crear_inspecciones', 'editar_inspecciones', 'aprobar_inspecciones', 'gestionar_templates'] :
       ['ver_inspecciones']
   }
+
+  console.log('🔍 QUALITY PAGE DATA PREPARED:', {
+    usuario: usuario ? 'Present' : 'Missing',
+    usuarioType: typeof usuario,
+    usuarioKeys: usuario ? Object.keys(usuario) : 'No usuario',
+    mockConfiguracion: mockConfiguracion ? 'Present' : 'Missing'
+  })
 
   // Configuración personalizada por rol  
   const configuracionPersonalizada = {
@@ -90,25 +108,31 @@ export default function QualityPage() {
     }
   ] : []
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <NavigationBar 
-        currentUser={{
-          id: usuario.id,
-          name: usuario.nombre,
-          role: usuario.rol === 'gerencia' ? 'EXECUTIVE' : 
-                usuario.rol === 'jefe_terreno' ? 'SITE_MANAGER' :
-                usuario.rol === 'oficina_tecnica' ? 'SUPERVISOR' :
-                usuario.rol === 'control_calidad' ? 'QUALITY_INSPECTOR' : 'WORKER',
-          isOnline: true
-        }}
-      />
-      <QualityControl 
-        usuario={usuario}
-        inspecciones={inspeccionesPorRole as any}
-        templatesChecklist={[]}
-        configuracion={configuracionPersonalizada}
-      />
-    </div>
-  )
+  console.log('🔍 QUALITY PAGE ABOUT TO RENDER QualityControl:', {
+    usuario: usuario,
+    inspeccionesPorRole: inspeccionesPorRole?.length || 0,
+    component: 'QualityControl'
+  })
+
+  try {
+    return (
+      <ProtectedLayout>
+        <QualityControl 
+          usuario={usuario}
+          inspecciones={inspeccionesPorRole as any}
+          templatesChecklist={[]}
+          configuracion={configuracionPersonalizada}
+        />
+      </ProtectedLayout>
+    )
+  } catch (error) {
+    console.error('💥 QUALITY PAGE RENDER ERROR:', {
+      error: error.message,
+      stack: error.stack,
+      component: 'QualityPage',
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+    })
+    throw error
+  }
 }

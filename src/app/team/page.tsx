@@ -282,12 +282,26 @@ const mockEquipos = [
 ]
 
 export default function TeamPage() {
+  console.log('🔍 TEAM PAGE LOADING:', {
+    component: 'TeamPage',
+    timestamp: new Date().toISOString(),
+    url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+  })
+
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   
   // Get role from URL params with fallback
   const role = searchParams.get('role') || 
                (session?.user.role === 'EXECUTIVE' ? 'gerencia' : 'jefe_terreno')
+  
+  console.log('🔍 TEAM PAGE SESSION & ROLE:', {
+    session: session ? 'Present' : 'Missing',
+    sessionUser: session?.user ? 'Present' : 'Missing',
+    role: role,
+    searchParamsRole: searchParams.get('role'),
+    sessionRole: session?.user?.role
+  })
   
   // Personalizar datos según rol del usuario autenticado
   const usuario = {
@@ -298,6 +312,16 @@ export default function TeamPage() {
     permisos: mockUsuario.permisos || ['ver_equipos'],
     proyectosAsignados: mockUsuario.proyectosAsignados || []
   }
+
+  console.log('🔍 TEAM PAGE DATA PREPARED:', {
+    usuario: usuario ? 'Present' : 'Missing',
+    usuarioType: typeof usuario,
+    usuarioKeys: usuario ? Object.keys(usuario) : 'No usuario',
+    mockEquipos: mockEquipos ? `Array of ${mockEquipos.length}` : 'Missing',
+    mockEquiposType: typeof mockEquipos,
+    isArray: Array.isArray(mockEquipos),
+    firstTeam: mockEquipos?.[0] ? Object.keys(mockEquipos[0]) : 'No first team'
+  })
 
   // Filtrar equipos según rol (demostración)
   const equiposPersonalizados = role === 'gerencia' ? mockEquipos :
@@ -331,18 +355,35 @@ export default function TeamPage() {
     alert('Funcionalidad de editar miembro será implementada con backend')
   }
 
-  return (
-    <ProtectedLayout>
-      <ErrorBoundary>
-        <TeamManagement 
-          usuario={usuario}
-          equipos={equiposPersonalizados}
-          onTeamCreate={handleTeamCreate}
-          onTeamUpdate={handleTeamUpdate}
-          onMemberAdd={handleMemberAdd}
-          onMemberUpdate={handleMemberUpdate}
-        />
-      </ErrorBoundary>
-    </ProtectedLayout>
-  )
+  console.log('🔍 TEAM PAGE ABOUT TO RENDER TeamManagement:', {
+    usuario: usuario,
+    equiposPersonalizados: equiposPersonalizados?.length || 0,
+    component: 'TeamManagement'
+  })
+
+  try {
+    return (
+      <ProtectedLayout>
+        <ErrorBoundary>
+          <TeamManagement 
+            usuario={usuario}
+            equipos={equiposPersonalizados}
+            onTeamCreate={handleTeamCreate}
+            onTeamUpdate={handleTeamUpdate}
+            onMemberAdd={handleMemberAdd}
+            onMemberUpdate={handleMemberUpdate}
+          />
+        </ErrorBoundary>
+      </ProtectedLayout>
+    )
+  } catch (error) {
+    console.error('💥 TEAM PAGE RENDER ERROR:', {
+      error: error.message,
+      stack: error.stack,
+      component: 'TeamPage',
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+    })
+    throw error
+  }
 }

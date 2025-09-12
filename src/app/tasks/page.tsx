@@ -145,12 +145,26 @@ const mockTareas = [
 ]
 
 export default function TasksPage() {
+  console.log('🔍 TASKS PAGE LOADING:', {
+    component: 'TasksPage',
+    timestamp: new Date().toISOString(),
+    url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+  })
+
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   
   // Get role from URL params with fallback
   const role = searchParams.get('role') || 
                (session?.user.role === 'EXECUTIVE' ? 'gerencia' : 'jefe_terreno')
+  
+  console.log('🔍 TASKS PAGE SESSION & ROLE:', {
+    session: session ? 'Present' : 'Missing',
+    sessionUser: session?.user ? 'Present' : 'Missing',
+    role: role,
+    searchParamsRole: searchParams.get('role'),
+    sessionRole: session?.user?.role
+  })
   
   // Personalizar datos según rol del usuario autenticado
   const usuario = {
@@ -161,6 +175,16 @@ export default function TasksPage() {
     permisos: mockUsuario.permisos || ['ver_tareas'],
     proyectosAsignados: mockUsuario.proyectosAsignados || []
   }
+
+  console.log('🔍 TASKS PAGE DATA PREPARED:', {
+    usuario: usuario ? 'Present' : 'Missing',
+    usuarioType: typeof usuario,
+    usuarioKeys: usuario ? Object.keys(usuario) : 'No usuario',
+    mockTareas: mockTareas ? `Array of ${mockTareas.length}` : 'Missing',
+    mockTareasType: typeof mockTareas,
+    isArray: Array.isArray(mockTareas),
+    firstTask: mockTareas?.[0] ? Object.keys(mockTareas[0]) : 'No first task'
+  })
 
   // Filtrar tareas según rol (demostración)
   const tareasPersonalizadas = role === 'gerencia' ? mockTareas : 
@@ -187,17 +211,34 @@ export default function TasksPage() {
     alert('Funcionalidad de eliminar tarea será implementada con backend')
   }
 
-  return (
-    <ProtectedLayout>
-      <ErrorBoundary>
-        <TaskManagement 
-          usuario={usuario}
-          tareas={tareasPersonalizadas}
-          onTaskCreate={handleTaskCreate}
-          onTaskUpdate={handleTaskUpdate}
-          onTaskDelete={handleTaskDelete}
-        />
-      </ErrorBoundary>
-    </ProtectedLayout>
-  )
+  console.log('🔍 TASKS PAGE ABOUT TO RENDER TaskManagement:', {
+    usuario: usuario,
+    tareasPersonalizadas: tareasPersonalizadas?.length || 0,
+    component: 'TaskManagement'
+  })
+
+  try {
+    return (
+      <ProtectedLayout>
+        <ErrorBoundary>
+          <TaskManagement 
+            usuario={usuario}
+            tareas={tareasPersonalizadas}
+            onTaskCreate={handleTaskCreate}
+            onTaskUpdate={handleTaskUpdate}
+            onTaskDelete={handleTaskDelete}
+          />
+        </ErrorBoundary>
+      </ProtectedLayout>
+    )
+  } catch (error) {
+    console.error('💥 TASKS PAGE RENDER ERROR:', {
+      error: error.message,
+      stack: error.stack,
+      component: 'TasksPage',
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+    })
+    throw error
+  }
 }

@@ -176,12 +176,26 @@ const mockMateriales = [
 ]
 
 export default function MaterialsPage() {
+  console.log('🔍 MATERIALS PAGE LOADING:', {
+    component: 'MaterialsPage',
+    timestamp: new Date().toISOString(),
+    url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+  })
+
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   
   // Get role from URL params with fallback
   const role = searchParams.get('role') || 
                (session?.user.role === 'EXECUTIVE' ? 'gerencia' : 'bodega')
+  
+  console.log('🔍 MATERIALS PAGE SESSION & ROLE:', {
+    session: session ? 'Present' : 'Missing',
+    sessionUser: session?.user ? 'Present' : 'Missing',
+    role: role,
+    searchParamsRole: searchParams.get('role'),
+    sessionRole: session?.user?.role
+  })
   
   // Personalizar datos según rol del usuario autenticado
   const usuario = {
@@ -192,6 +206,16 @@ export default function MaterialsPage() {
     permisos: mockUsuario.permisos || ['ver_materiales'],
     proyectosAsignados: mockUsuario.proyectosAsignados || []
   }
+
+  console.log('🔍 MATERIALS PAGE DATA PREPARED:', {
+    usuario: usuario ? 'Present' : 'Missing',
+    usuarioType: typeof usuario,
+    usuarioKeys: usuario ? Object.keys(usuario) : 'No usuario',
+    mockMateriales: mockMateriales ? `Array of ${mockMateriales.length}` : 'Missing',
+    mockMaterialesType: typeof mockMateriales,
+    isArray: Array.isArray(mockMateriales),
+    firstMaterial: mockMateriales?.[0] ? Object.keys(mockMateriales[0]) : 'No first material'
+  })
 
   // Filtrar materiales según rol (demostración)
   const materialesPersonalizados = role === 'gerencia' ? mockMateriales :
@@ -219,17 +243,34 @@ export default function MaterialsPage() {
     alert('Funcionalidad de entregar material será implementada con backend')
   }
 
-  return (
-    <ProtectedLayout>
-      <ErrorBoundary>
-        <MaterialsManagement 
-          usuario={usuario}
-          materiales={materialesPersonalizados}
-          onMaterialRequest={handleMaterialRequest}
-          onMaterialUpdate={handleMaterialUpdate}
-          onMaterialDelivery={handleMaterialDelivery}
-        />
-      </ErrorBoundary>
-    </ProtectedLayout>
-  )
+  console.log('🔍 MATERIALS PAGE ABOUT TO RENDER MaterialsManagement:', {
+    usuario: usuario,
+    materialesPersonalizados: materialesPersonalizados?.length || 0,
+    component: 'MaterialsManagement'
+  })
+
+  try {
+    return (
+      <ProtectedLayout>
+        <ErrorBoundary>
+          <MaterialsManagement 
+            usuario={usuario}
+            materiales={materialesPersonalizados}
+            onMaterialRequest={handleMaterialRequest}
+            onMaterialUpdate={handleMaterialUpdate}
+            onMaterialDelivery={handleMaterialDelivery}
+          />
+        </ErrorBoundary>
+      </ProtectedLayout>
+    )
+  } catch (error) {
+    console.error('💥 MATERIALS PAGE RENDER ERROR:', {
+      error: error.message,
+      stack: error.stack,
+      component: 'MaterialsPage',
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+    })
+    throw error
+  }
 }

@@ -315,12 +315,19 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
     const handleNavigationClick = (item: NavigationItem) => {
       if (item.disabled) return
       
-      if (onNavigate) {
-        onNavigate(item)
-      }
-      
+      // First priority: custom onClick handler
       if (item.onClick) {
         item.onClick()
+      }
+      // Second priority: navigate to href with role preservation
+      else if (item.href) {
+        const roleQuery = currentRole ? `?role=${currentRole}` : ''
+        router.push(`${item.href}${roleQuery}`)
+      }
+      
+      // Call parent onNavigate callback if provided
+      if (onNavigate) {
+        onNavigate(item)
       }
       
       // Close mobile menu after navigation

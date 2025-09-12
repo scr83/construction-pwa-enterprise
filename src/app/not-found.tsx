@@ -118,7 +118,7 @@ export default function NotFound() {
                     variant="outline"
                     size="sm"
                     className="w-full"
-                    leftIcon={<Icon name="log-in" size="sm" />}
+                    leftIcon={<Icon name="user" size="sm" />}
                   >
                     Iniciar Sesión
                   </Button>
@@ -129,7 +129,7 @@ export default function NotFound() {
                     variant="outline" 
                     size="sm"
                     className="w-full"
-                    leftIcon={<Icon name="user-plus" size="sm" />}
+                    leftIcon={<Icon name="plus" size="sm" />}
                   >
                     Registrarse
                   </Button>

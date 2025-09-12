@@ -237,14 +237,14 @@ export function MaterialsManagement({
     })
   }, [materiales, searchTerm, selectedStatus, selectedCategory])
 
-  // Permisos basados en rol
-  const canRequestMaterials = usuario.permisos.includes('solicitar_materiales') || 
+  // Permisos basados en rol - Add defensive checks
+  const canRequestMaterials = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('solicitar_materiales')) || 
                              ['gerencia', 'jefe_terreno', 'bodega', 'oficina_tecnica'].includes(currentRole)
   
-  const canManageMaterials = usuario.permisos.includes('gestionar_materiales') || 
+  const canManageMaterials = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('gestionar_materiales')) || 
                            ['gerencia', 'bodega'].includes(currentRole)
 
-  const canApproveMaterials = usuario.permisos.includes('aprobar_materiales') || 
+  const canApproveMaterials = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('aprobar_materiales')) || 
                             ['gerencia', 'oficina_tecnica'].includes(currentRole)
 
   return (
@@ -264,7 +264,7 @@ export function MaterialsManagement({
           {canRequestMaterials && (
             <Button
               variant="outline"
-              leftIcon={<Icon name="package-plus" size="sm" />}
+              leftIcon={<Icon name="plus" size="sm" />}
               onClick={() => onMaterialRequest?.({ 
                 requestedBy: usuario.nombre,
                 status: 'solicitado',
@@ -311,7 +311,7 @@ export function MaterialsManagement({
           title="Solicitados"
           value={materialStats.solicitados.toString()}
           variant="warning"
-          icon="package-search"
+          icon="search"
         />
         <StatusCard
           title="Valor Total"

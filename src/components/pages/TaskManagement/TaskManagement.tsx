@@ -206,11 +206,11 @@ export function TaskManagement({
     })
   }, [tareas, searchTerm, selectedStatus, selectedPriority])
 
-  // Permisos basados en rol
-  const canCreateTasks = usuario.permisos.includes('crear_tareas') || 
+  // Permisos basados en rol - Add defensive checks
+  const canCreateTasks = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('crear_tareas')) || 
                         ['gerencia', 'jefe_terreno', 'oficina_tecnica'].includes(currentRole)
   
-  const canEditTasks = usuario.permisos.includes('editar_tareas') || 
+  const canEditTasks = (usuario?.permisos && Array.isArray(usuario.permisos) && usuario.permisos.includes('editar_tareas')) || 
                       ['gerencia', 'jefe_terreno'].includes(currentRole)
 
   return (

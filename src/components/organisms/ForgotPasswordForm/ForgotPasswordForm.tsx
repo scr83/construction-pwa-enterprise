@@ -195,7 +195,7 @@ export function ForgotPasswordForm({ className, onSuccess }: ForgotPasswordFormP
             <span>Válido por 1 hora</span>
           </div>
           <div className="flex items-center gap-1">
-            <Icon name="lock" size="xs" />
+            <Icon name="shield-check" size="xs" />
             <span>Encriptado</span>
           </div>
         </div>

@@ -355,7 +355,7 @@ export function TeamManagement({
           {canManageTeams && (
             <Button
               variant="outline"
-              leftIcon={<Icon name="user-plus" size="sm" />}
+              leftIcon={<Icon name="plus" size="sm" />}
               onClick={() => onMemberAdd?.('', {})}
             >
               Agregar Miembro

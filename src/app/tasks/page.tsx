@@ -2,6 +2,7 @@
 
 import { TaskManagement } from '@/components/pages/TaskManagement'
 import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
+import { ErrorBoundary } from '@/components/atoms/ErrorBoundary'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 
@@ -154,9 +155,11 @@ export default function TasksPage() {
   // Personalizar datos según rol del usuario autenticado
   const usuario = {
     ...mockUsuario,
-    id: session?.user.id || 'user-1',
-    nombre: session?.user.name || 'Usuario',
-    rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad'
+    id: session?.user?.id || 'user-1',
+    nombre: session?.user?.name || 'Usuario',
+    rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad',
+    permisos: mockUsuario.permisos || ['ver_tareas'],
+    proyectosAsignados: mockUsuario.proyectosAsignados || []
   }
 
   // Filtrar tareas según rol (demostración)
@@ -186,13 +189,15 @@ export default function TasksPage() {
 
   return (
     <ProtectedLayout>
-      <TaskManagement 
-        usuario={usuario}
-        tareas={tareasPersonalizadas}
-        onTaskCreate={handleTaskCreate}
-        onTaskUpdate={handleTaskUpdate}
-        onTaskDelete={handleTaskDelete}
-      />
+      <ErrorBoundary>
+        <TaskManagement 
+          usuario={usuario}
+          tareas={tareasPersonalizadas}
+          onTaskCreate={handleTaskCreate}
+          onTaskUpdate={handleTaskUpdate}
+          onTaskDelete={handleTaskDelete}
+        />
+      </ErrorBoundary>
     </ProtectedLayout>
   )
 }

@@ -2,6 +2,7 @@
 
 import { TeamManagement } from '@/components/pages/TeamManagement'
 import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
+import { ErrorBoundary } from '@/components/atoms/ErrorBoundary'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 
@@ -291,9 +292,11 @@ export default function TeamPage() {
   // Personalizar datos según rol del usuario autenticado
   const usuario = {
     ...mockUsuario,
-    id: session?.user.id || 'user-1',
-    nombre: session?.user.name || 'Usuario',
-    rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad'
+    id: session?.user?.id || 'user-1',
+    nombre: session?.user?.name || 'Usuario',
+    rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad',
+    permisos: mockUsuario.permisos || ['ver_equipos'],
+    proyectosAsignados: mockUsuario.proyectosAsignados || []
   }
 
   // Filtrar equipos según rol (demostración)
@@ -330,14 +333,16 @@ export default function TeamPage() {
 
   return (
     <ProtectedLayout>
-      <TeamManagement 
-        usuario={usuario}
-        equipos={equiposPersonalizados}
-        onTeamCreate={handleTeamCreate}
-        onTeamUpdate={handleTeamUpdate}
-        onMemberAdd={handleMemberAdd}
-        onMemberUpdate={handleMemberUpdate}
-      />
+      <ErrorBoundary>
+        <TeamManagement 
+          usuario={usuario}
+          equipos={equiposPersonalizados}
+          onTeamCreate={handleTeamCreate}
+          onTeamUpdate={handleTeamUpdate}
+          onMemberAdd={handleMemberAdd}
+          onMemberUpdate={handleMemberUpdate}
+        />
+      </ErrorBoundary>
     </ProtectedLayout>
   )
 }

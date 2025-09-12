@@ -151,7 +151,7 @@ export function LoginForm({ className, onSuccess }: LoginFormProps) {
           disabled={isLoading || !isValid}
           leftIcon={isLoading ? 
             <Icon name="loader-2" size="sm" className="animate-spin" /> : 
-            <Icon name="log-in" size="sm" />
+            <Icon name="user" size="sm" />
           }
         >
           {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}

@@ -284,7 +284,7 @@ export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
           disabled={isLoading || !isValid}
           leftIcon={isLoading ? 
             <Icon name="loader-2" size="sm" className="animate-spin" /> : 
-            <Icon name="user-plus" size="sm" />
+            <Icon name="plus" size="sm" />
           }
         >
           {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}

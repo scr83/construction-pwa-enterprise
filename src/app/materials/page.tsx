@@ -2,6 +2,7 @@
 
 import { MaterialsManagement } from '@/components/pages/MaterialsManagement'
 import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
+import { ErrorBoundary } from '@/components/atoms/ErrorBoundary'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 
@@ -185,9 +186,11 @@ export default function MaterialsPage() {
   // Personalizar datos según rol del usuario autenticado
   const usuario = {
     ...mockUsuario,
-    id: session?.user.id || 'user-1',
-    nombre: session?.user.name || 'Usuario',
-    rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad'
+    id: session?.user?.id || 'user-1',
+    nombre: session?.user?.name || 'Usuario',
+    rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad',
+    permisos: mockUsuario.permisos || ['ver_materiales'],
+    proyectosAsignados: mockUsuario.proyectosAsignados || []
   }
 
   // Filtrar materiales según rol (demostración)
@@ -218,13 +221,15 @@ export default function MaterialsPage() {
 
   return (
     <ProtectedLayout>
-      <MaterialsManagement 
-        usuario={usuario}
-        materiales={materialesPersonalizados}
-        onMaterialRequest={handleMaterialRequest}
-        onMaterialUpdate={handleMaterialUpdate}
-        onMaterialDelivery={handleMaterialDelivery}
-      />
+      <ErrorBoundary>
+        <MaterialsManagement 
+          usuario={usuario}
+          materiales={materialesPersonalizados}
+          onMaterialRequest={handleMaterialRequest}
+          onMaterialUpdate={handleMaterialUpdate}
+          onMaterialDelivery={handleMaterialDelivery}
+        />
+      </ErrorBoundary>
     </ProtectedLayout>
   )
 }

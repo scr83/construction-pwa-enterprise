@@ -83,6 +83,7 @@ import {
   Upload,
   Download,
   RefreshCw as Refresh,
+  Loader2,
   Search,
   Filter,
   
@@ -198,6 +199,7 @@ const constructionIcons = {
   'upload': Upload,
   'download': Download,
   'refresh': Refresh,
+  'loader-2': Loader2,
   'search': Search,
   'filter': Filter,
   

@@ -18,6 +18,7 @@ import {
 } from '@/lib/api/teams'
 import { Button } from '@/components/atoms/Button'
 import { Loading } from '@/components/atoms/Loading'
+import { CreateTeamForm } from './CreateTeamForm'
 
 interface TeamManagementProps {
   projectId?: string
@@ -475,6 +476,26 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
           </div>
         )}
       </div>
+      
+      {/* Create Team Modal */}
+      {showCreateForm && (
+        <CreateTeamForm
+          onSubmit={handleCreateTeam}
+          onCancel={() => setShowCreateForm(false)}
+          loading={loading}
+        />
+      )}
+      
+      {/* Add Member Modal - TODO: Implement AddMemberForm component */}
+      {showAddMemberForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Agregar Miembro</h3>
+            <p className="text-gray-600 mb-4">Funcionalidad de agregar miembro en desarrollo...</p>
+            <Button onClick={() => setShowAddMemberForm(null)}>Cerrar</Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

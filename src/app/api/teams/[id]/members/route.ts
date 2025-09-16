@@ -250,13 +250,13 @@ export async function PUT(
 
     const teamId = params.id
     const body = await req.json()
-    const { userId, ...updateData } = body
+    const { userId, ...memberUpdateData } = body
     
     if (!userId) {
       return NextResponse.json({ error: 'ID del usuario es requerido' }, { status: 400 })
     }
 
-    const validatedData = updateMemberSchema.parse(updateData)
+    const validatedData = updateMemberSchema.parse(memberUpdateData)
 
     // Verify team exists and user has access
     const team = await prisma.team.findFirst({

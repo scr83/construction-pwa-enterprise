@@ -3,6 +3,8 @@
 import { Dashboard } from '@/components/pages/Dashboard'
 import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
 import { useSession } from 'next-auth/react'
+import { useState, useEffect } from 'react'
+import { teamsApi, type DashboardKPIs } from '@/lib/api/teams'
 
 // Mock data for demonstration
 const mockUsuario = {
@@ -88,6 +90,11 @@ const mockAccionesRapidas = [
 export default function DashboardPage() {
   const { data: session } = useSession()
   
+  // Customer-requested productivity data state
+  const [productivityKPIs, setProductivityKPIs] = useState<DashboardKPIs | null>(null)
+  const [productivityLoading, setProductivityLoading] = useState(true)
+  const [productivityError, setProductivityError] = useState<string | null>(null)
+  
   // Map NextAuth role to dashboard role format  
   const role = session?.user.role === 'EXECUTIVE' ? 'gerencia' : 'jefe_terreno'
   
@@ -99,39 +106,99 @@ export default function DashboardPage() {
     rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad'
   }
 
-  // KPIs personalizados por rol
+  // Load real productivity data - customer's #1 requested feature
+  useEffect(() => {
+    const loadProductivityData = async () => {
+      if (!session?.user) return
+      
+      try {
+        setProductivityError(null)
+        const response = await teamsApi.getDashboardKPIs()
+        
+        if (response.success && response.data) {
+          setProductivityKPIs(response.data.kpis)
+        } else {
+          setProductivityError(response.error || 'Error cargando métricas de productividad')
+        }
+      } catch (error) {
+        setProductivityError('Error de conexión')
+      } finally {
+        setProductivityLoading(false)
+      }
+    }
+
+    loadProductivityData()
+  }, [session])
+
+  // Real productivity KPIs - customer validated feature
   const kpisPersonalizados = role === 'gerencia' ? [
     {
-      id: 'kpi-gerencia-1',
-      titulo: 'ROI Proyectos',
-      valor: 15.2,
+      id: 'kpi-productividad-organizacional',
+      titulo: 'Productividad Organizacional',
+      valor: productivityKPIs?.overallProductivity || 0,
       tipo: 'porcentaje' as const,
-      estado: 'bueno' as const,
+      estado: (productivityKPIs?.overallProductivity || 0) >= 90 ? 'bueno' as const : 
+              (productivityKPIs?.overallProductivity || 0) >= 80 ? 'advertencia' as const : 'critico' as const,
       ultimaActualizacion: new Date().toISOString()
     },
     {
-      id: 'kpi-gerencia-2', 
-      titulo: 'Margen EBITDA',
-      valor: 18.5,
+      id: 'kpi-utilizacion-equipos', 
+      titulo: 'Utilización de Equipos',
+      valor: productivityKPIs?.teamUtilization || 0,
       tipo: 'porcentaje' as const,
-      estado: 'bueno' as const,
+      estado: (productivityKPIs?.teamUtilization || 0) >= 85 ? 'bueno' as const : 'advertencia' as const,
+      ultimaActualizacion: new Date().toISOString()
+    },
+    {
+      id: 'kpi-equipos-activos',
+      titulo: 'Equipos Activos',
+      valor: productivityKPIs?.activeTeams || 0,
+      tipo: 'numero' as const,
+      estado: 'info' as const,
+      ultimaActualizacion: new Date().toISOString()
+    },
+    {
+      id: 'kpi-seguridad-ejecutivo',
+      titulo: 'Rating de Seguridad',
+      valor: productivityKPIs?.safetyScore || 0,
+      tipo: 'numero' as const,
+      estado: (productivityKPIs?.safetyScore || 0) >= 95 ? 'bueno' as const : 'critico' as const,
       ultimaActualizacion: new Date().toISOString()
     }
   ] : role === 'jefe_terreno' ? [
     {
-      id: 'kpi-terreno-1',
-      titulo: 'Tareas Hoy',
-      valor: 12,
-      tipo: 'numero' as const,
-      estado: 'advertencia' as const,
+      id: 'kpi-productividad-general',
+      titulo: 'Productividad General',
+      valor: productivityKPIs?.overallProductivity || 0,
+      tipo: 'porcentaje' as const,
+      estado: (productivityKPIs?.overallProductivity || 0) >= 85 ? 'bueno' as const : 
+              (productivityKPIs?.overallProductivity || 0) >= 70 ? 'advertencia' as const : 'critico' as const,
       ultimaActualizacion: new Date().toISOString()
     },
     {
-      id: 'kpi-terreno-2',
-      titulo: 'Trabajadores Activos',
-      valor: 25,
+      id: 'kpi-equipos-activos-terreno',
+      titulo: 'Equipos Activos',
+      valor: `${productivityKPIs?.activeTeams || 0} de ${productivityKPIs?.totalTeams || 0}`,
+      tipo: 'texto' as const,
+      estado: (productivityKPIs?.totalTeams && productivityKPIs?.activeTeams / productivityKPIs.totalTeams >= 0.8) ? 'bueno' as const : 'advertencia' as const,
+      ultimaActualizacion: new Date().toISOString()
+    },
+    {
+      id: 'kpi-calidad-promedio',
+      titulo: 'Calidad Promedio',
+      valor: productivityKPIs?.qualityScore || 0,
+      tipo: 'porcentaje' as const,
+      estado: (productivityKPIs?.qualityScore || 0) >= 90 ? 'bueno' as const : 
+              (productivityKPIs?.qualityScore || 0) >= 80 ? 'advertencia' as const : 'critico' as const,
+      ultimaActualizacion: new Date().toISOString()
+    },
+    {
+      id: 'kpi-dias-sin-incidentes',
+      titulo: 'Días sin Incidentes',
+      valor: productivityKPIs?.daysWithoutIncidents || 0,
       tipo: 'numero' as const,
-      estado: 'bueno' as const,
+      estado: (productivityKPIs?.daysWithoutIncidents || 0) >= 30 ? 'bueno' as const : 
+              (productivityKPIs?.daysWithoutIncidents || 0) >= 15 ? 'advertencia' as const : 'critico' as const,
       ultimaActualizacion: new Date().toISOString()
     }
   ] : role === 'bodega' ? [

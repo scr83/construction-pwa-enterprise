@@ -20,6 +20,8 @@ import { Button } from '@/components/atoms/Button'
 import { Card } from '@/components/atoms/Card'
 import { Badge } from '@/components/atoms/Badge'
 import { Avatar } from '@/components/atoms/Avatar'
+import { useSession } from 'next-auth/react'
+import { teamsApi, type DashboardKPIs } from '@/lib/api/teams'
 
 // Definir variantes del componente
 export const dashboardVariants = cva(
@@ -229,6 +231,12 @@ export function Dashboard({
   const [mostrarFormTarea, setMostrarFormTarea] = useState(false)
   const [mostrarMaterialTracker, setMostrarMaterialTracker] = useState(false)
   const [mostrarTeamAssignment, setMostrarTeamAssignment] = useState(false)
+  
+  // Productivity data state - Customer requested feature
+  const [productivityKPIs, setProductivityKPIs] = useState<DashboardKPIs | null>(null)
+  const [productivityLoading, setProductivityLoading] = useState(true)
+  const [productivityError, setProductivityError] = useState<string | null>(null)
+  const { data: session } = useSession()
 
   // Efectos
   useEffect(() => {
@@ -251,6 +259,30 @@ export function Dashboard({
     setNotificacionesFiltradas(filtradas)
   }, [notificaciones, usuario.proyectosAsignados])
 
+  // Load productivity data - Customer validated feature
+  useEffect(() => {
+    const loadProductivityData = async () => {
+      if (!session?.user) return
+      
+      try {
+        setProductivityError(null)
+        const response = await teamsApi.getDashboardKPIs(proyectoSeleccionado || undefined)
+        
+        if (response.success && response.data) {
+          setProductivityKPIs(response.data.kpis)
+        } else {
+          setProductivityError(response.error || 'Error cargando métricas de productividad')
+        }
+      } catch (error) {
+        setProductivityError('Error de conexión')
+      } finally {
+        setProductivityLoading(false)
+      }
+    }
+
+    loadProductivityData()
+  }, [session, proyectoSeleccionado])
+
   // Cálculos derivados por rol
   const dashboardData = useMemo(() => {
     const proyectosActivos = proyectos.filter(p => 
@@ -262,86 +294,137 @@ export function Dashboard({
 
     switch (usuario.rol) {
       case 'gerencia':
+        // Executive dashboard with customer-requested productivity metrics
+        const executiveProductivity = productivityKPIs?.overallProductivity || 0
+        const teamUtilization = productivityKPIs?.teamUtilization || 0
+        const totalTeamsExecutive = productivityKPIs?.totalTeams || 0
+        const totalTasks = productivityKPIs?.totalTasks || 0
+        const avgTasksPerTeam = productivityKPIs?.avgTasksPerTeam || 0
+        
         return {
           titulo: 'Dashboard Ejecutivo',
-          subtitulo: `${proyectos.length} proyectos en cartera`,
+          subtitulo: `${totalTeamsExecutive} equipos en ${proyectos.length} proyectos`,
           kpisPrincipales: [
             {
-              id: 'ingresos-mes',
-              titulo: 'Ingresos del Mes',
-              valor: proyectos.reduce((acc, p) => acc + (p.presupuestoEjecutado * 0.1), 0),
-              tipo: 'moneda' as const,
-              estado: 'bueno' as const,
-              tendencia: { direccion: 'subiendo' as const, porcentaje: 12.5, periodo: 'vs mes anterior' },
-              ultimaActualizacion: new Date().toISOString()
-            },
-            {
-              id: 'margen-utilidad',
-              titulo: 'Margen de Utilidad',
-              valor: 18.7,
+              id: 'productividad-organizacional',
+              titulo: 'Productividad Organizacional',
+              valor: executiveProductivity,
               tipo: 'porcentaje' as const,
-              estado: 'bueno' as const,
-              meta: 15,
+              estado: executiveProductivity >= 90 ? 'bueno' as const : 
+                      executiveProductivity >= 80 ? 'advertencia' as const : 'critico' as const,
+              tendencia: (productivityKPIs?.weeklyTrend || 0) > 0 ? { 
+                direccion: 'subiendo' as const, 
+                porcentaje: productivityKPIs?.weeklyTrend || 0, 
+                periodo: 'vs semana anterior' 
+              } : undefined,
+              meta: 90,
               ultimaActualizacion: new Date().toISOString()
             },
             {
-              id: 'proyectos-activos',
-              titulo: 'Proyectos Activos',
-              valor: proyectosActivos.length,
-              tipo: 'numero' as const,
+              id: 'utilizacion-equipos',
+              titulo: 'Utilización de Equipos',
+              valor: teamUtilization,
+              tipo: 'porcentaje' as const,
+              estado: teamUtilization >= 85 ? 'bueno' as const : 'advertencia' as const,
+              meta: 85,
+              ultimaActualizacion: new Date().toISOString()
+            },
+            {
+              id: 'output-diario',
+              titulo: 'Output Diario ($M)',
+              valor: (productivityKPIs?.dailyEfficiency || 0) / 1000000,
+              tipo: 'moneda' as const,
               estado: 'info' as const,
               ultimaActualizacion: new Date().toISOString()
             },
             {
-              id: 'eficiencia-operacional',
-              titulo: 'Eficiencia Operacional',
-              valor: 94.2,
-              tipo: 'porcentaje' as const,
-              estado: 'bueno' as const,
-              meta: 90,
+              id: 'eficiencia-equipos',
+              titulo: 'Eficiencia por Equipo',
+              valor: avgTasksPerTeam,
+              tipo: 'numero' as const,
+              estado: avgTasksPerTeam >= 15 ? 'bueno' as const : 'advertencia' as const,
+              descripcion: 'Tareas promedio por equipo',
+              ultimaActualizacion: new Date().toISOString()
+            },
+            {
+              id: 'kpi-seguridad-ejecutivo',
+              titulo: 'Rating de Seguridad',
+              valor: productivityKPIs?.safetyScore || 0,
+              tipo: 'numero' as const,
+              estado: (productivityKPIs?.safetyScore || 0) >= 95 ? 'bueno' as const : 'critico' as const,
+              meta: 95,
               ultimaActualizacion: new Date().toISOString()
             }
           ],
-          vistasDisponibles: ['resumen', 'proyectos', 'financiero', 'equipos']
+          vistasDisponibles: ['resumen', 'proyectos', 'financiero', 'equipos', 'productividad']
         }
 
       case 'jefe_terreno':
-        const tareasHoy = proyectosAsignados.reduce((acc, p) => acc + p.calidad.inspeccionesPendientes, 0)
+        // Customer-validated productivity metrics - highest priority feature
+        const productivityValue = productivityKPIs?.overallProductivity || 0
+        const teamsActive = productivityKPIs?.activeTeams || 0
+        const teamsTotal = productivityKPIs?.totalTeams || 0
+        const qualityValue = productivityKPIs?.qualityScore || 0
+        const safetyDays = productivityKPIs?.daysWithoutIncidents || 0
+        const weeklyTrend = productivityKPIs?.weeklyTrend || 0
+        
         return {
           titulo: 'Control de Terreno',
-          subtitulo: `${proyectosAsignados.length} proyectos asignados`,
+          subtitulo: `${teamsTotal} equipos de construcción`,
           kpisPrincipales: [
             {
-              id: 'tareas-hoy',
-              titulo: 'Tareas de Hoy',
-              valor: tareasHoy,
-              tipo: 'numero' as const,
-              estado: tareasHoy > 10 ? 'advertencia' as const : 'bueno' as const,
-              ultimaActualizacion: new Date().toISOString()
-            },
-            {
-              id: 'avance-semanal',
-              titulo: 'Avance Semanal',
-              valor: proyectosAsignados.reduce((acc, p) => acc + p.avanceFisico, 0) / proyectosAsignados.length || 0,
+              id: 'productividad-general',
+              titulo: 'Productividad General',
+              valor: productivityValue,
               tipo: 'porcentaje' as const,
-              estado: 'bueno' as const,
-              meta: 70,
+              estado: productivityValue >= 85 ? 'bueno' as const : 
+                      productivityValue >= 70 ? 'advertencia' as const : 'critico' as const,
+              tendencia: weeklyTrend > 0 ? { 
+                direccion: 'subiendo' as const, 
+                porcentaje: weeklyTrend, 
+                periodo: 'vs semana anterior' 
+              } : weeklyTrend < 0 ? { 
+                direccion: 'bajando' as const, 
+                porcentaje: Math.abs(weeklyTrend), 
+                periodo: 'vs semana anterior' 
+              } : undefined,
+              meta: 85,
               ultimaActualizacion: new Date().toISOString()
             },
             {
-              id: 'trabajadores-activos',
-              titulo: 'Trabajadores en Terreno',
-              valor: proyectosAsignados.reduce((acc, p) => acc + p.equipo.totalTrabajadores, 0),
-              tipo: 'numero' as const,
-              estado: 'info' as const,
+              id: 'equipos-activos',
+              titulo: 'Equipos Activos',
+              valor: `${teamsActive} de ${teamsTotal}`,
+              tipo: 'texto' as const,
+              estado: (teamsTotal > 0 && teamsActive / teamsTotal >= 0.8) ? 'bueno' as const : 'advertencia' as const,
               ultimaActualizacion: new Date().toISOString()
             },
             {
-              id: 'incidentes-calidad',
-              titulo: 'Incidentes de Calidad',
-              valor: proyectosAsignados.reduce((acc, p) => acc + p.calidad.noConformidades, 0),
+              id: 'calidad-promedio',
+              titulo: 'Calidad Promedio',
+              valor: qualityValue,
+              tipo: 'porcentaje' as const,
+              estado: qualityValue >= 90 ? 'bueno' as const : 
+                      qualityValue >= 80 ? 'advertencia' as const : 'critico' as const,
+              meta: 90,
+              ultimaActualizacion: new Date().toISOString()
+            },
+            {
+              id: 'seguridad-dias',
+              titulo: 'Días sin Incidentes',
+              valor: safetyDays,
               tipo: 'numero' as const,
-              estado: 'advertencia' as const,
+              estado: safetyDays >= 30 ? 'bueno' as const : 
+                      safetyDays >= 15 ? 'advertencia' as const : 'critico' as const,
+              ultimaActualizacion: new Date().toISOString()
+            },
+            {
+              id: 'eficiencia-diaria',
+              titulo: 'Eficiencia Diaria',
+              valor: productivityKPIs?.dailyEfficiency || 0,
+              tipo: 'porcentaje' as const,
+              estado: (productivityKPIs?.dailyEfficiency || 0) >= 100 ? 'bueno' as const : 'advertencia' as const,
+              meta: 100,
               ultimaActualizacion: new Date().toISOString()
             }
           ],
@@ -491,10 +574,26 @@ export function Dashboard({
     setActualizando(true)
     try {
       await onActualizar?.()
+      
+      // Also refresh productivity data - customer requested feature
+      if (session?.user) {
+        try {
+          setProductivityError(null)
+          const response = await teamsApi.getDashboardKPIs(proyectoSeleccionado || undefined)
+          
+          if (response.success && response.data) {
+            setProductivityKPIs(response.data.kpis)
+          } else {
+            setProductivityError(response.error || 'Error actualizando métricas de productividad')
+          }
+        } catch (error) {
+          setProductivityError('Error de conexión al actualizar productividad')
+        }
+      }
     } finally {
       setActualizando(false)
     }
-  }, [onActualizar])
+  }, [onActualizar, session, proyectoSeleccionado])
 
   const handleAccionRapida = useCallback((accionId: string) => {
     const accion = accionesRapidas.find(a => a.id === accionId)

@@ -62,6 +62,9 @@ model User {
   workRecords        WorkRecord[]
   qualityRecords     QualityRecord[]
   paymentRecords     PaymentRecord[]
+  supervisedTeams    Team[] @relation("TeamSupervisor")
+  teamMemberships    TeamMember[] @relation("TeamMemberUser")
+  productivityRecords DailyProductivity[] @relation("ProductivityRecorder")
 
   @@map("users")
 }
@@ -92,6 +95,7 @@ model Project {
   buildings           Building[]
   projectAssignments  ProjectAssignment[]
   constructionActivities ConstructionActivity[]
+  teams               Team[]
 
   @@map("projects")
 }
@@ -273,4 +277,87 @@ model ProjectAssignment {
 
   @@unique([userId, projectId])
   @@map("project_assignments")
+}
+
+// Chilean Construction Team Management Models
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // 'estructuras', 'instalaciones', 'terminaciones', 'calidad'
+  projectId   String   @map("project_id")
+  supervisorId String  @map("supervisor_id")
+  status      String   @default("active") // 'active', 'inactive', 'on_break'
+  specialties String[] // Array of specialties
+  productivityTarget Decimal @default(100.00) @map("productivity_target")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  project     Project  @relation(fields: [projectId], references: [id])
+  supervisor  User     @relation("TeamSupervisor", fields: [supervisorId], references: [id])
+  members     TeamMember[]
+  productivity DailyProductivity[]
+  metrics     TeamMetrics[]
+  
+  @@map("teams")
+}
+
+model TeamMember {
+  id          String   @id @default(cuid())
+  teamId      String   @map("team_id")
+  userId      String   @map("user_id")
+  role        String   // 'maestro_mayor', 'maestro_albanil', 'oficial_primera', 'ayudante', 'jornal'
+  hourlyRate  Decimal? @map("hourly_rate")
+  joinedDate  DateTime @default(now()) @map("joined_date")
+  status      String   @default("active")
+  performanceRating Decimal @default(0.00) @map("performance_rating")
+  
+  // Relations
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User     @relation("TeamMemberUser", fields: [userId], references: [id])
+  
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+model DailyProductivity {
+  id            String   @id @default(cuid())
+  teamId        String   @map("team_id")
+  date          DateTime
+  hoursWorked   Decimal  @map("hours_worked")
+  tasksCompleted Int     @default(0) @map("tasks_completed")
+  unitsCompleted Int     @default(0) @map("units_completed")
+  productivityScore Decimal? @map("productivity_score")
+  qualityScore  Decimal? @map("quality_score")
+  safetyIncidents Int    @default(0) @map("safety_incidents")
+  notes         String?
+  recordedBy    String   @map("recorded_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  recorder      User     @relation("ProductivityRecorder", fields: [recordedBy], references: [id])
+  
+  @@unique([teamId, date])
+  @@map("daily_productivity")
+}
+
+model TeamMetrics {
+  id                String   @id @default(cuid())
+  teamId            String   @map("team_id")
+  week              DateTime // Start of week
+  avgProductivity   Decimal  @default(0.00) @map("avg_productivity")
+  avgQualityScore   Decimal  @default(0.00) @map("avg_quality_score")
+  attendanceRate    Decimal  @default(0.00) @map("attendance_rate")
+  safetyScore       Decimal  @default(0.00) @map("safety_score")
+  tasksCompleted    Int      @default(0) @map("tasks_completed")
+  costEfficiency    Decimal  @default(0.00) @map("cost_efficiency")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  team              Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@unique([teamId, week])
+  @@map("team_metrics")
 }

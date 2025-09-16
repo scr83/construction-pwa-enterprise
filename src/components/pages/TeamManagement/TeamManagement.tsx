@@ -1,28 +1,188 @@
 'use client'
 
-export function TeamManagement({ usuario, equipos = [], onTeamCreate, onTeamUpdate, onMemberAdd, onMemberUpdate }) {
-  // Safety check for props
-  const safeEquipos = Array.isArray(equipos) ? equipos : []
-  const safeUsuario = usuario || { rol: 'jefe_terreno', nombre: 'Usuario' }
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { 
+  teamsApi, 
+  constructionRoles, 
+  teamTypes, 
+  teamStatuses, 
+  memberStatuses,
+  getProductivityColor,
+  getProductivityStatus,
+  formatDate,
+  type Team,
+  type TeamMember,
+  type CreateTeamData,
+  type AddTeamMemberData 
+} from '@/lib/api/teams'
+import { Button } from '@/components/atoms/Button'
+import { Loading } from '@/components/atoms/Loading'
+
+interface TeamManagementProps {
+  projectId?: string
+}
+
+export function TeamManagement({ projectId }: TeamManagementProps) {
+  const { data: session } = useSession()
+  const [teams, setTeams] = useState<Team[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showAddMemberForm, setShowAddMemberForm] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
   // Calculate total team members across all teams
-  const totalMembers = safeEquipos.reduce((total, team) => total + (team.members?.length || 0), 0)
+  const totalMembers = teams.reduce((total, team) => total + (team.members?.length || 0), 0)
+
+  // Load teams data
+  const loadTeams = async () => {
+    if (!session?.user) return
+    
+    try {
+      setError(null)
+      const response = await teamsApi.getTeams(projectId)
+      
+      if (response.success && response.data) {
+        setTeams(response.data.teams)
+      } else {
+        setError(response.error || 'Error cargando equipos')
+      }
+    } catch (err) {
+      setError('Error de conexión')
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  // Refresh teams data
+  const refreshTeams = async () => {
+    setRefreshing(true)
+    await loadTeams()
+  }
+
+  // Handle team status update
+  const handleTeamStatusUpdate = async (teamId: string, status: 'active' | 'inactive' | 'on_break') => {
+    try {
+      const response = await teamsApi.updateTeam(teamId, { status })
+      
+      if (response.success) {
+        await refreshTeams()
+      } else {
+        setError(response.error || 'Error actualizando equipo')
+      }
+    } catch (err) {
+      setError('Error actualizando estado del equipo')
+    }
+  }
+
+  // Handle create team
+  const handleCreateTeam = async (teamData: CreateTeamData) => {
+    try {
+      const response = await teamsApi.createTeam(teamData)
+      
+      if (response.success) {
+        setShowCreateForm(false)
+        await refreshTeams()
+      } else {
+        setError(response.error || 'Error creando equipo')
+      }
+    } catch (err) {
+      setError('Error creando equipo')
+    }
+  }
+
+  // Handle add team member
+  const handleAddMember = async (teamId: string, memberData: AddTeamMemberData) => {
+    try {
+      const response = await teamsApi.addTeamMember(teamId, memberData)
+      
+      if (response.success) {
+        setShowAddMemberForm(null)
+        await refreshTeams()
+      } else {
+        setError(response.error || 'Error agregando miembro')
+      }
+    } catch (err) {
+      setError('Error agregando miembro al equipo')
+    }
+  }
+
+  // Load teams on component mount
+  useEffect(() => {
+    loadTeams()
+  }, [session, projectId])
+
+  // Get user role for permissions
+  const userRole = session?.user?.role || 'WORKER'
+  const canManageTeams = ['SITE_MANAGER', 'EXECUTIVE', 'ADMIN'].includes(userRole)
+  const canModifyTeams = ['SUPERVISOR', 'SITE_MANAGER', 'EXECUTIVE', 'ADMIN'].includes(userRole)
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center h-64">
+          <Loading />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Gestión de Equipos
-        </h1>
-        <p className="text-gray-600 mb-4">
-          Administración de cuadrillas y personal de construcción - {safeUsuario.rol?.replace('_', ' ') || 'Usuario'}
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Gestión de Equipos
+            </h1>
+            <p className="text-gray-600">
+              Administración de cuadrillas y personal de construcción - {session?.user?.name || 'Usuario'}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              onClick={refreshTeams}
+              disabled={refreshing}
+            >
+              {refreshing ? '🔄' : '↻'} Actualizar
+            </Button>
+            {canManageTeams && (
+              <Button
+                onClick={() => setShowCreateForm(true)}
+              >
+                👥 Crear Equipo
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div className="flex">
+              <div className="text-red-400">⚠️</div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error</h3>
+                <div className="mt-2 text-sm text-red-700">{error}</div>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-400 hover:text-red-600"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
         
         {/* Team KPI cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">Total Cuadrillas</h3>
-            <p className="text-2xl font-bold text-gray-900">{safeEquipos.length}</p>
+            <p className="text-2xl font-bold text-gray-900">{teams.length}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">Personal Total</h3>
@@ -31,19 +191,19 @@ export function TeamManagement({ usuario, equipos = [], onTeamCreate, onTeamUpda
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">Equipos Activos</h3>
             <p className="text-2xl font-bold text-green-600">
-              {safeEquipos.filter(e => e.status === 'activo').length}
+              {teams.filter(t => t.status === 'active').length}
             </p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">En Descanso</h3>
             <p className="text-2xl font-bold text-orange-600">
-              {safeEquipos.filter(e => e.status === 'en_descanso').length}
+              {teams.filter(t => t.status === 'on_break').length}
             </p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">Productividad Avg</h3>
             <p className="text-2xl font-bold text-purple-600">
-              {safeEquipos.length > 0 ? Math.round(safeEquipos.reduce((sum, e) => sum + (e.productivity || 0), 0) / safeEquipos.length) : 0}%
+              {teams.length > 0 ? Math.round(teams.reduce((sum, t) => sum + (t.currentMetrics?.productivity || 0), 0) / teams.length) : 0}%
             </p>
           </div>
         </div>
@@ -51,53 +211,60 @@ export function TeamManagement({ usuario, equipos = [], onTeamCreate, onTeamUpda
 
       {/* Teams list */}
       <div className="space-y-6">
-        {safeEquipos.length > 0 ? (
-          safeEquipos.map(equipo => (
-            <div key={equipo.id} className="bg-white p-6 rounded-lg shadow border hover:shadow-md transition-shadow">
+        {teams.length > 0 ? (
+          teams.map(team => (
+            <div key={team.id} className="bg-white p-6 rounded-lg shadow border hover:shadow-md transition-shadow">
               {/* Team Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-xl font-semibold text-gray-900">
-                      {equipo.name}
+                      {team.name}
                     </h3>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                      ${equipo.status === 'activo' ? 'bg-green-100 text-green-800' :
-                        equipo.status === 'en_descanso' ? 'bg-orange-100 text-orange-800' :
-                        equipo.status === 'inactivo' ? 'bg-red-100 text-red-800' :
+                      ${team.status === 'active' ? 'bg-green-100 text-green-800' :
+                        team.status === 'on_break' ? 'bg-orange-100 text-orange-800' :
+                        team.status === 'inactive' ? 'bg-red-100 text-red-800' :
                         'bg-gray-100 text-gray-800'}`}>
-                      {equipo.status === 'activo' ? '🟢 Activo' :
-                       equipo.status === 'en_descanso' ? '🟡 En Descanso' :
-                       equipo.status === 'inactivo' ? '🔴 Inactivo' :
-                       equipo.status}
+                      {team.status === 'active' ? '🟢 Activo' :
+                       team.status === 'on_break' ? '🟡 En Descanso' :
+                       team.status === 'inactive' ? '🔴 Inactivo' :
+                       teamStatuses[team.status] || team.status}
                     </span>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                      ${equipo.department === 'terreno' ? 'bg-blue-100 text-blue-800' :
-                        equipo.department === 'instalaciones' ? 'bg-purple-100 text-purple-800' :
-                        equipo.department === 'calidad' ? 'bg-green-100 text-green-800' :
+                      ${team.type === 'estructuras' ? 'bg-blue-100 text-blue-800' :
+                        team.type === 'instalaciones' ? 'bg-purple-100 text-purple-800' :
+                        team.type === 'calidad' ? 'bg-green-100 text-green-800' :
+                        team.type === 'terminaciones' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-gray-100 text-gray-800'}`}>
-                      {equipo.department === 'terreno' ? '🏗️ Terreno' :
-                       equipo.department === 'instalaciones' ? '⚡ Instalaciones' :
-                       equipo.department === 'calidad' ? '🛡️ Calidad' :
-                       equipo.department}
+                      {team.type === 'estructuras' ? '🏗️ Estructuras' :
+                       team.type === 'instalaciones' ? '⚡ Instalaciones' :
+                       team.type === 'calidad' ? '🛡️ Calidad' :
+                       team.type === 'terminaciones' ? '🎨 Terminaciones' :
+                       teamTypes[team.type] || team.type}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-1">
-                    <strong>Supervisor:</strong> {equipo.supervisor}
+                    <strong>Supervisor:</strong> {team.supervisor.name}
                   </p>
                   <p className="text-sm text-gray-600">
-                    <strong>Proyecto:</strong> {equipo.currentProject} - {equipo.currentLocation}
+                    <strong>Proyecto:</strong> {team.project.name}
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">
-                    {equipo.productivity || 0}%
+                  <div className={`text-2xl font-bold mb-1 ${getProductivityColor(team.currentMetrics?.productivity || 0)}`}>
+                    {team.currentMetrics?.productivity || 0}%
                   </div>
                   <div className="text-sm text-gray-500">Productividad</div>
                   <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: `${Math.min(100, equipo.productivity || 0)}%` }}
+                      className={`h-2 rounded-full ${
+                        getProductivityStatus(team.currentMetrics?.productivity || 0) === 'excellent' ? 'bg-green-600' :
+                        getProductivityStatus(team.currentMetrics?.productivity || 0) === 'good' ? 'bg-blue-600' :
+                        getProductivityStatus(team.currentMetrics?.productivity || 0) === 'warning' ? 'bg-yellow-600' :
+                        'bg-red-600'
+                      }`}
+                      style={{ width: `${Math.min(100, team.currentMetrics?.productivity || 0)}%` }}
                     />
                   </div>
                 </div>
@@ -107,49 +274,52 @@ export function TeamManagement({ usuario, equipos = [], onTeamCreate, onTeamUpda
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                 <div className="text-center">
                   <div className="text-lg font-semibold text-gray-900">
-                    {equipo.performance?.tasksCompleted || 0}
+                    {team.currentMetrics?.tasksCompleted || 0}
                   </div>
                   <div className="text-xs text-gray-500">Tareas Completadas</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold text-green-600">
-                    {equipo.performance?.qualityScore || 0}%
+                    {team.currentMetrics?.qualityScore || 0}%
                   </div>
                   <div className="text-xs text-gray-500">Calidad</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold text-blue-600">
-                    {equipo.performance?.attendance || 0}%
+                    {Math.round(team.currentMetrics?.attendanceRate || 0)}%
                   </div>
                   <div className="text-xs text-gray-500">Asistencia</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold text-purple-600">
-                    {equipo.safetyRecord?.daysWithoutIncidents || 0}
+                    {team.currentMetrics?.safetyIncidents === 0 ? '✅' : '⚠️'} {team.currentMetrics?.safetyIncidents || 0}
                   </div>
-                  <div className="text-xs text-gray-500">Días sin Incidentes</div>
+                  <div className="text-xs text-gray-500">Incidentes de Seguridad</div>
                 </div>
               </div>
 
-              {/* Work Schedule and Assignments */}
+              {/* Team Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">📅 Horario de Trabajo</h4>
+                  <h4 className="font-medium text-gray-700 mb-2">📋 Información del Equipo</h4>
                   <p className="text-sm text-gray-600 mb-1">
-                    {equipo.workSchedule?.startTime} - {equipo.workSchedule?.endTime}
+                    <strong>Tipo:</strong> {teamTypes[team.type] || team.type}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-1">
+                    <strong>Meta Productividad:</strong> {team.productivityTarget}%
                   </p>
                   <p className="text-sm text-gray-600">
-                    {equipo.workSchedule?.workDays?.join(', ') || 'No definido'}
+                    <strong>Creado:</strong> {formatDate(team.createdAt)}
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">🔧 Asignaciones Actuales</h4>
+                  <h4 className="font-medium text-gray-700 mb-2">🔧 Especialidades</h4>
                   <div className="flex flex-wrap gap-1">
-                    {equipo.assignments?.map((assignment, index) => (
+                    {team.specialties && team.specialties.length > 0 ? team.specialties.map((specialty, index) => (
                       <span key={index} className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">
-                        {assignment}
+                        {specialty}
                       </span>
-                    )) || <span className="text-sm text-gray-500">Sin asignaciones</span>}
+                    )) : <span className="text-sm text-gray-500">Sin especialidades definidas</span>}
                   </div>
                 </div>
               </div>
@@ -158,82 +328,77 @@ export function TeamManagement({ usuario, equipos = [], onTeamCreate, onTeamUpda
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-gray-700">
-                    👥 Miembros del Equipo ({equipo.members?.length || 0})
+                    👥 Miembros del Equipo ({team.members?.length || 0})
                   </h4>
-                  {(safeUsuario.rol === 'gerencia' || safeUsuario.rol === 'jefe_terreno') && onMemberAdd && (
-                    <button
-                      onClick={() => onMemberAdd(equipo.id, {
-                        nombre: 'Nuevo Trabajador',
-                        cargo: 'Ayudante',
-                        especialidad: 'ayudante'
-                      })}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  {canModifyTeams && (
+                    <Button
+                      size="sm"
+                      onClick={() => setShowAddMemberForm(team.id)}
                     >
                       ➕ Agregar Miembro
-                    </button>
+                    </Button>
                   )}
                 </div>
 
-                {equipo.members && equipo.members.length > 0 ? (
+                {team.members && team.members.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {equipo.members.map(member => (
+                    {team.members.map(member => (
                       <div key={member.id} className="p-3 border border-gray-200 rounded-lg bg-white">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h5 className="font-medium text-gray-900 text-sm">
-                              {member.nombre}
+                              {member.user.name}
                             </h5>
                             <p className="text-xs text-gray-600 mb-1">
-                              {member.cargo} - {member.especialidad === 'albañil' ? 'Albañil' :
-                                                member.especialidad === 'fierrero' ? 'Fierrero' :
-                                                member.especialidad === 'electricista' ? 'Electricista' :
-                                                member.especialidad === 'gasfiter' ? 'Gasfiter' :
-                                                member.especialidad === 'jefe_equipo' ? 'Jefe de Equipo' :
-                                                member.especialidad === 'operador' ? 'Operador' :
-                                                'Ayudante'}
+                              {constructionRoles[member.role] || member.role}
                             </p>
                             <p className="text-xs text-gray-500 mb-1">
-                              RUT: {member.rut}
+                              Email: {member.user.email}
                             </p>
-                            {member.telefono && (
+                            {member.user.phone && (
                               <p className="text-xs text-gray-500 mb-1">
-                                📞 {member.telefono}
+                                📞 {member.user.phone}
                               </p>
                             )}
+                            {member.hourlyRate && (
+                              <p className="text-xs text-gray-500 mb-1">
+                                💰 ${member.hourlyRate.toLocaleString()}/hora
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-500">
+                              Ingresó: {formatDate(member.joinedDate)}
+                            </p>
                           </div>
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                            ${member.estado === 'activo' ? 'bg-green-100 text-green-800' :
-                              member.estado === 'licencia' ? 'bg-yellow-100 text-yellow-800' :
-                              member.estado === 'vacaciones' ? 'bg-blue-100 text-blue-800' :
+                            ${member.status === 'active' ? 'bg-green-100 text-green-800' :
+                              member.status === 'on_leave' ? 'bg-yellow-100 text-yellow-800' :
+                              member.status === 'vacation' ? 'bg-blue-100 text-blue-800' :
                               'bg-red-100 text-red-800'}`}>
-                            {member.estado === 'activo' ? '✓' :
-                             member.estado === 'licencia' ? '🏥' :
-                             member.estado === 'vacaciones' ? '🏖️' :
+                            {member.status === 'active' ? '✓' :
+                             member.status === 'on_leave' ? '🏥' :
+                             member.status === 'vacation' ? '🏖️' :
                              '❌'}
                           </span>
                         </div>
                         
-                        {member.certificaciones && member.certificaciones.length > 0 && (
+                        {member.performanceRating > 0 && (
                           <div className="mt-2">
-                            <p className="text-xs text-gray-500 mb-1">Certificaciones:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {member.certificaciones.slice(0, 2).map((cert, index) => (
-                                <span key={index} className="inline-flex items-center px-1 py-0.5 rounded text-xs bg-gray-100 text-gray-700">
-                                  🏅 {cert}
-                                </span>
-                              ))}
-                              {member.certificaciones.length > 2 && (
-                                <span className="text-xs text-gray-500">
-                                  +{member.certificaciones.length - 2} más
-                                </span>
-                              )}
+                            <p className="text-xs text-gray-500 mb-1">Rendimiento:</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                                <div 
+                                  className="bg-blue-600 h-1.5 rounded-full" 
+                                  style={{ width: `${member.performanceRating}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-600">{member.performanceRating}%</span>
                             </div>
                           </div>
                         )}
 
-                        {member.contratistaEmpresa && (
+                        {member.user.company && (
                           <p className="text-xs text-gray-500 mt-2">
-                            🏢 {member.contratistaEmpresa}
+                            🏢 {member.user.company}
                           </p>
                         )}
                       </div>
@@ -246,71 +411,45 @@ export function TeamManagement({ usuario, equipos = [], onTeamCreate, onTeamUpda
                 )}
               </div>
 
-              {/* Equipment and Tools */}
-              {equipo.equipment && equipo.equipment.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="font-medium text-gray-700 mb-2">🔨 Equipos y Herramientas</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {equipo.equipment.map((item, index) => (
-                      <span key={index} className="inline-flex items-center px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800">
-                        🛠️ {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {equipo.notes && (
-                <p className="text-sm text-gray-700 mt-3 pt-3 border-t">
-                  📝 {equipo.notes}
-                </p>
-              )}
-
               {/* Action buttons based on role */}
               <div className="flex gap-2 mt-4 pt-3 border-t">
-                {safeUsuario.rol === 'jefe_terreno' && equipo.status === 'en_descanso' && (
-                  <button
-                    onClick={() => onTeamUpdate && onTeamUpdate(equipo.id, { status: 'activo' })}
-                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                {canModifyTeams && team.status === 'on_break' && (
+                  <Button
+                    size="sm"
+                    variant="success"
+                    onClick={() => handleTeamStatusUpdate(team.id, 'active')}
                   >
                     ✅ Activar Equipo
-                  </button>
+                  </Button>
                 )}
                 
-                {safeUsuario.rol === 'jefe_terreno' && equipo.status === 'activo' && (
-                  <button
-                    onClick={() => onTeamUpdate && onTeamUpdate(equipo.id, { status: 'en_descanso' })}
-                    className="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700 transition-colors"
+                {canModifyTeams && team.status === 'active' && (
+                  <Button
+                    size="sm"
+                    variant="warning"
+                    onClick={() => handleTeamStatusUpdate(team.id, 'on_break')}
                   >
                     ⏸️ Pausar Trabajo
-                  </button>
+                  </Button>
                 )}
                 
-                {(safeUsuario.rol === 'gerencia' || safeUsuario.rol === 'jefe_terreno') && (
-                  <button
-                    onClick={() => console.log('Asignar nueva tarea:', equipo.id)}
-                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                {canManageTeams && (
+                  <Button
+                    size="sm"
+                    onClick={() => window.open(`/teams/${team.id}`, '_blank')}
                   >
-                    📋 Asignar Tarea
-                  </button>
+                    📊 Ver Detalle
+                  </Button>
                 )}
                 
-                {safeUsuario.rol === 'gerencia' && (
-                  <button
-                    onClick={() => console.log('Ver reporte detallado:', equipo.id)}
-                    className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-colors"
-                  >
-                    📊 Ver Reporte
-                  </button>
-                )}
-                
-                {equipo.productivity < 80 && safeUsuario.rol === 'jefe_terreno' && (
-                  <button
-                    onClick={() => console.log('Plan mejora productividad:', equipo.id)}
-                    className="px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
+                {(team.currentMetrics?.productivity || 0) < 80 && canModifyTeams && (
+                  <Button
+                    size="sm"
+                    variant="warning"
+                    onClick={() => window.open(`/teams/${team.id}/productivity`, '_blank')}
                   >
                     ⚡ Mejorar Productividad
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -323,35 +462,19 @@ export function TeamManagement({ usuario, equipos = [], onTeamCreate, onTeamUpda
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No hay equipos asignados
+              No hay equipos registrados
             </h3>
-            <p className="text-gray-600">
-              Los equipos de trabajo aparecerán aquí cuando sean creados
+            <p className="text-gray-600 mb-4">
+              {canManageTeams ? 'Crea tu primer equipo de construcción' : 'Los equipos de trabajo aparecerán aquí cuando sean creados'}
             </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Rol actual: {safeUsuario.rol?.replace('_', ' ') || 'Usuario'}
-            </p>
+            {canManageTeams && (
+              <Button onClick={() => setShowCreateForm(true)}>
+                👥 Crear Primer Equipo
+              </Button>
+            )}
           </div>
         )}
       </div>
-
-      {/* Add new team button for allowed roles */}
-      {(safeUsuario.rol === 'gerencia' || safeUsuario.rol === 'jefe_terreno') && onTeamCreate && (
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => onTeamCreate({
-              name: 'Nuevo Equipo de Construcción',
-              department: 'terreno',
-              supervisor: safeUsuario.nombre,
-              status: 'activo',
-              productivity: 85
-            })}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-          >
-            👥 Crear Nuevo Equipo
-          </button>
-        </div>
-      )}
     </div>
   )
 }

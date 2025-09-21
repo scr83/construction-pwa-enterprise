@@ -1020,7 +1020,7 @@ export function ProjectManagement({
     return (
       <div className="space-y-6">
         {/* Estadísticas generales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-8">
           <Card className="p-4">
             <h3 className="font-medium text-gray-700 mb-1">Total Proyectos</h3>
             <div className="text-2xl font-bold text-blue-600">{estadisticas.total}</div>
@@ -1096,7 +1096,10 @@ export function ProjectManagement({
                   ...filtrosAplicados, 
                   prioridad: e.target.value === 'all' ? [] : [e.target.value] 
                 })}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                className="border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm appearance-none bg-white bg-no-repeat bg-right bg-[length:12px_12px] bg-[position:right_8px_center]" 
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`
+                }}
               >
                 <option value="all">Todos Prioridad</option>
                 <option value="baja">Baja</option>
@@ -1110,7 +1113,10 @@ export function ProjectManagement({
                   ...filtrosAplicados, 
                   region: e.target.value === 'all' ? [] : [e.target.value] 
                 })}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                className="border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm appearance-none bg-white bg-no-repeat bg-right bg-[length:12px_12px] bg-[position:right_8px_center]"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`
+                }}
               >
                 <option value="all">Todos Región</option>
                 <option value="Metropolitana">R.M.</option>

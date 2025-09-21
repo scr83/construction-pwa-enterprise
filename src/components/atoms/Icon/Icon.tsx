@@ -18,6 +18,8 @@ import {
   Menu,
   LayoutDashboard,
   ListChecks,
+  ClipboardList,
+  FileText,
   Zap,
   LogOut,
   HelpCircle,
@@ -226,6 +228,8 @@ const constructionIcons = {
   'menu': Menu,
   'layout-dashboard': LayoutDashboard,
   'list-checks': ListChecks,
+  'clipboard-list': ClipboardList,
+  'file-text': FileText,
   'chart-bar': BarChart,
   'zap': Zap,
   'log-out': LogOut,
@@ -240,7 +244,6 @@ const constructionIcons = {
   'film': Film,
   
   // Documents
-  'file-text': FileText,
   'file': File,
   'folder': Folder,
   'folder-open': FolderOpen,

@@ -51,9 +51,9 @@ export default function ProjectsPage() {
     permisos: role === 'gerencia' ? 
       ['ver_proyectos', 'crear_proyecto', 'editar_presupuesto', 'ver_todos_proyectos'] :
       role === 'jefe_terreno' ?
-      ['ver_proyectos', 'editar_avance', 'asignar_trabajadores', 'ver_cronograma'] :
+      ['ver_proyectos', 'crear_proyecto', 'editar_avance', 'asignar_trabajadores', 'ver_cronograma'] :
       role === 'oficina_tecnica' ?
-      ['ver_proyectos', 'editar_planificacion', 'gestionar_materiales', 'crear_cronograma'] :
+      ['ver_proyectos', 'crear_proyecto', 'editar_planificacion', 'gestionar_materiales', 'crear_cronograma'] :
       ['ver_proyectos'],
     proyectosAsignados: projects.map(p => p.id)
   }

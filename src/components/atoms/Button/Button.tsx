@@ -5,7 +5,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 touch-target',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 min-h-[44px] min-w-[44px] touch-manipulation',
   {
     variants: {
       variant: {
@@ -34,19 +34,19 @@ const buttonVariants = cva(
         link: 'text-primary-600 underline-offset-4 hover:underline active:text-primary-800',
       },
       size: {
-        // Extra small for dense interfaces
-        xs: 'h-8 px-3 text-xs',
+        // Extra small for dense interfaces (desktop only, still touch-friendly)
+        xs: 'h-10 px-3 text-xs md:h-8',
         // Small for secondary actions
-        sm: 'h-9 px-4 text-sm',
+        sm: 'h-10 px-4 text-sm md:h-9',
         // Default size optimized for mobile touch
         default: 'h-11 px-6 text-sm',
         // Large for primary actions on mobile
         lg: 'h-12 px-8 text-base',
         // Extra large for important field actions
         xl: 'h-14 px-10 text-lg',
-        // Icon only sizes
+        // Icon only sizes (always touch-friendly)
         icon: 'h-11 w-11',
-        'icon-sm': 'h-9 w-9',
+        'icon-sm': 'h-10 w-10 md:h-9 md:w-9',
         'icon-lg': 'h-12 w-12',
       },
       fullWidth: {
@@ -104,7 +104,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         <span className={cn('flex-1', { 'sr-only': loading && !children })}>
           {children}
         </span>
-        {!loading && rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+        {!loading && rightIcon && <span className="flex-shrink-0 ml-1">{rightIcon}</span>}
       </button>
     )
   }

@@ -1327,6 +1327,14 @@ export function ProjectManagement({
         }}
         role={usuario.rol}
         className={cn(projectManagementVariants({ mode, layout }), className)}
+        actions={hasPermission(usuario, 'crear_proyecto') ? [
+          {
+            id: 'crear',
+            label: 'Nuevo Proyecto',
+            variant: 'primary' as const,
+            onClick: handleCrearProyecto
+          }
+        ] : undefined}
         {...props}
       >
         {renderContenidoPrincipal()}

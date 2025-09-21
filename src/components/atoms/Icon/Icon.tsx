@@ -115,7 +115,6 @@ import {
   Film,
   
   // Documents
-  FileText,
   File,
   Folder,
   FolderOpen,

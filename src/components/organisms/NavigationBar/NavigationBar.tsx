@@ -7,10 +7,30 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/atoms/Button'
 import { Typography } from '@/components/atoms/Typography'
-import { Icon } from '@/components/atoms/Icon'
 import { Avatar } from '@/components/atoms/Avatar'
 import { Badge } from '@/components/atoms/Badge'
 import { UserMenu } from '@/components/molecules/UserMenu'
+// Direct Lucide imports that WORK
+import {
+  HardHat,
+  LayoutDashboard,
+  Building2,
+  ClipboardList,
+  ShieldCheck,
+  Package,
+  Users,
+  FileText,
+  Menu,
+  X,
+  ChevronDown,
+  Bell,
+  WifiOff,
+  RefreshCw,
+  Phone,
+  ChevronRight,
+  AlertTriangle,
+  Info
+} from 'lucide-react'
 
 const navigationBarVariants = cva(
   'w-full bg-white border-b border-secondary-200 shadow-sm',
@@ -193,6 +213,28 @@ const getDefaultNavigationItems = (role: ConstructionRole): NavigationItem[] => 
   ]
 
   return baseItems.filter(item => item.roles.includes(role))
+}
+
+// Get icon component based on string name
+const getIconComponent = (iconName: string, size: number = 16) => {
+  switch (iconName) {
+    case 'layout-dashboard':
+      return <LayoutDashboard size={size} />
+    case 'building-2':
+      return <Building2 size={size} />
+    case 'clipboard-list':
+      return <ClipboardList size={size} />
+    case 'shield-check':
+      return <ShieldCheck size={size} />
+    case 'package':
+      return <Package size={size} />
+    case 'users':
+      return <Users size={size} />
+    case 'file-text':
+      return <FileText size={size} />
+    default:
+      return <LayoutDashboard size={size} />
+  }
 }
 
 const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
@@ -379,7 +421,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
               className="md:hidden"
               aria-label="Toggle navigation menu"
             >
-              <Icon name={isMobileMenuOpen ? 'x' : 'menu'} size="sm" />
+              {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
             </Button>
             
             {/* Logo - clickable */}
@@ -391,7 +433,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                 }}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
               >
-                {logo || <Icon name="hard-hat" size="lg" className="text-primary-600" />}
+                {logo || <HardHat size={24} className="text-primary-600" />}
                 {!compactMode && (
                   <Typography variant="h6" className="font-bold hidden sm:block">
                     ConstructorApp
@@ -407,7 +449,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                   variant="outline"
                   size="sm"
                   onClick={() => setShowProjectSelector(!showProjectSelector)}
-                  rightIcon={<Icon name="chevron-down" size="xs" />}
+                  rightIcon={<ChevronDown size={12} />}
                   className="max-w-xs"
                 >
                   <div className="text-left truncate">
@@ -452,7 +494,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                 size="sm"
                 onClick={() => handleNavigationClick(item)}
                 disabled={item.disabled}
-                leftIcon={<Icon name={item.icon as any} size="sm" />}
+                leftIcon={getIconComponent(item.icon, 16)}
                 className="relative"
               >
                 {!compactMode && item.label}
@@ -475,7 +517,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
             {/* Offline Status */}
             {isOffline && (
               <div className="flex items-center gap-1 text-xs text-orange-600">
-                <Icon name="wifi-off" size="xs" />
+                <WifiOff size={12} />
                 {!compactMode && 'Sin conexión'}
               </div>
             )}
@@ -487,7 +529,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                   variant="outline"
                   size="sm"
                   className="text-orange-600 border-orange-200"
-                  leftIcon={<Icon name="refresh-cw" size="xs" />}
+                  leftIcon={<RefreshCw size={12} />}
                 >
                   Sync
                 </Button>
@@ -506,7 +548,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                 variant="destructive"
                 size="sm"
                 onClick={emergencyContact}
-                leftIcon={<Icon name="phone" size="xs" />}
+                leftIcon={<Phone size={12} />}
                 className="hidden sm:flex"
               >
                 {!compactMode && 'SOS'}
@@ -524,7 +566,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                     onClick={() => handleNavigationClick(action)}
                     disabled={action.disabled}
                   >
-                    <Icon name={action.icon as any} size="xs" />
+                    {getIconComponent(action.icon, 12)}
                   </Button>
                 ))}
               </div>
@@ -539,7 +581,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                   onClick={() => setShowNotificationPanel(!showNotificationPanel)}
                   className="relative"
                 >
-                  <Icon name="bell" size="sm" />
+                  <Bell size={16} />
                   {unreadNotifications > 0 && (
                     <Badge
                       size="xs"
@@ -581,16 +623,20 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <Icon 
-                                  name={notification.type === 'CRITICAL' ? 'alert-triangle' : 'info'} 
-                                  size="xs" 
-                                  className={cn(
+                                {notification.type === 'CRITICAL' ? 
+                                  <AlertTriangle size={12} className={cn(
                                     notification.priority === 'CRITICAL' ? 'text-red-500' :
                                     notification.priority === 'HIGH' ? 'text-orange-500' :
                                     notification.priority === 'MEDIUM' ? 'text-blue-500' :
                                     'text-secondary-400'
-                                  )}
-                                />
+                                  )} /> : 
+                                  <Info size={12} className={cn(
+                                    notification.priority === 'CRITICAL' ? 'text-red-500' :
+                                    notification.priority === 'HIGH' ? 'text-orange-500' :
+                                    notification.priority === 'MEDIUM' ? 'text-blue-500' :
+                                    'text-secondary-400'
+                                  )} />
+                                }
                                 <Typography variant="caption" className="font-medium">
                                   {notification.type}
                                 </Typography>
@@ -621,7 +667,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                                   onNotificationDismiss(notification.id)
                                 }}
                               >
-                                <Icon name="x" size="xs" />
+                                <X size={12} />
                               </Button>
                             )}
                           </div>
@@ -658,9 +704,9 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
         {showBreadcrumbs && breadcrumbs.length > 0 && (
           <div className="px-4 py-2 border-t border-secondary-100 bg-secondary-25">
             <div className="flex items-center gap-2 text-sm">
-              {breadcrumbs.map((crumb, index) => (
-                <React.Fragment key={index}>
-                  {index > 0 && <Icon name="chevron-right" size="xs" className="text-secondary-400" />}
+            {breadcrumbs.map((crumb, index) => (
+            <React.Fragment key={index}>
+            {index > 0 && <ChevronRight size={12} className="text-secondary-400" />}
                   <button
                     className={cn(
                       'hover:text-primary-600',
@@ -696,7 +742,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                   size="default"
                   onClick={() => handleNavigationClick(item)}
                   disabled={item.disabled}
-                  leftIcon={<Icon name={item.icon as any} size="sm" />}
+                  leftIcon={getIconComponent(item.icon, 16)}
                   className="w-full justify-start relative"
                 >
                   {item.label}
@@ -725,7 +771,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                         size="sm"
                         onClick={() => handleNavigationClick(action)}
                         disabled={action.disabled}
-                        leftIcon={<Icon name={action.icon as any} size="xs" />}
+                        leftIcon={getIconComponent(action.icon, 12)}
                       >
                         {action.label}
                       </Button>
@@ -741,7 +787,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                     variant="destructive"
                     size="default"
                     onClick={emergencyContact}
-                    leftIcon={<Icon name="phone" size="sm" />}
+                    leftIcon={<Phone size={16} />}
                     className="w-full"
                   >
                     Contacto de Emergencia

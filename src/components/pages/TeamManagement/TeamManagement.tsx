@@ -214,50 +214,54 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
       <div className="space-y-6">
         {teams.length > 0 ? (
           teams.map(team => (
-            <div key={team.id} className="bg-white p-6 rounded-lg shadow border hover:shadow-md transition-shadow">
+            <div key={team.id} className="bg-white p-4 md:p-6 rounded-lg shadow border hover:shadow-md transition-shadow">
               {/* Team Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-semibold text-gray-900">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
+                <div className="flex-1 mb-4 md:mb-0">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-2">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900">
                       {team.name}
                     </h3>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                      ${team.status === 'active' ? 'bg-green-100 text-green-800' :
-                        team.status === 'on_break' ? 'bg-orange-100 text-orange-800' :
-                        team.status === 'inactive' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'}`}>
-                      {team.status === 'active' ? '🟢 Activo' :
-                       team.status === 'on_break' ? '🟡 En Descanso' :
-                       team.status === 'inactive' ? '🔴 Inactivo' :
-                       teamStatuses[team.status] || team.status}
-                    </span>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                      ${team.type === 'estructuras' ? 'bg-blue-100 text-blue-800' :
-                        team.type === 'instalaciones' ? 'bg-purple-100 text-purple-800' :
-                        team.type === 'calidad' ? 'bg-green-100 text-green-800' :
-                        team.type === 'terminaciones' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'}`}>
-                      {team.type === 'estructuras' ? '🏗️ Estructuras' :
-                       team.type === 'instalaciones' ? '⚡ Instalaciones' :
-                       team.type === 'calidad' ? '🛡️ Calidad' :
-                       team.type === 'terminaciones' ? '🎨 Terminaciones' :
-                       teamTypes[team.type] || team.type}
-                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                        ${team.status === 'active' ? 'bg-green-100 text-green-800' :
+                          team.status === 'on_break' ? 'bg-orange-100 text-orange-800' :
+                          team.status === 'inactive' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'}`}>
+                        {team.status === 'active' ? '🟢 Activo' :
+                         team.status === 'on_break' ? '🟡 En Descanso' :
+                         team.status === 'inactive' ? '🔴 Inactivo' :
+                         teamStatuses[team.status] || team.status}
+                      </span>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                        ${team.type === 'estructuras' ? 'bg-blue-100 text-blue-800' :
+                          team.type === 'instalaciones' ? 'bg-purple-100 text-purple-800' :
+                          team.type === 'calidad' ? 'bg-green-100 text-green-800' :
+                          team.type === 'terminaciones' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'}`}>
+                        {team.type === 'estructuras' ? '🏗️ Estructuras' :
+                         team.type === 'instalaciones' ? '⚡ Instalaciones' :
+                         team.type === 'calidad' ? '🛡️ Calidad' :
+                         team.type === 'terminaciones' ? '🎨 Terminaciones' :
+                         teamTypes[team.type] || team.type}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <strong>Supervisor:</strong> {team.supervisor.name}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Proyecto:</strong> {team.project.name}
-                  </p>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p>
+                      <strong>Supervisor:</strong> {team.supervisor.name}
+                    </p>
+                    <p>
+                      <strong>Proyecto:</strong> {team.project.name}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className={`text-2xl font-bold mb-1 ${getProductivityColor(team.currentMetrics?.productivity || 0)}`}>
+                <div className="flex md:flex-col items-center md:items-end md:text-right">
+                  <div className={`text-xl md:text-2xl font-bold mb-1 ${getProductivityColor(team.currentMetrics?.productivity || 0)}`}>
                     {team.currentMetrics?.productivity || 0}%
                   </div>
-                  <div className="text-sm text-gray-500">Productividad</div>
-                  <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                  <div className="text-xs md:text-sm text-gray-500 ml-2 md:ml-0">Productividad</div>
+                  <div className="w-16 md:w-20 bg-gray-200 rounded-full h-2 mt-1 ml-2 md:ml-0">
                     <div 
                       className={`h-2 rounded-full ${
                         getProductivityStatus(team.currentMetrics?.productivity || 0) === 'excellent' ? 'bg-green-600' :
@@ -272,27 +276,27 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
               </div>
 
               {/* Team Performance Metrics */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 p-3 md:p-4 bg-gray-50 rounded-lg">
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-gray-900">
+                  <div className="text-base md:text-lg font-semibold text-gray-900">
                     {team.currentMetrics?.tasksCompleted || 0}
                   </div>
                   <div className="text-xs text-gray-500">Tareas Completadas</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-green-600">
+                  <div className="text-base md:text-lg font-semibold text-green-600">
                     {team.currentMetrics?.qualityScore || 0}%
                   </div>
                   <div className="text-xs text-gray-500">Calidad</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-blue-600">
+                  <div className="text-base md:text-lg font-semibold text-blue-600">
                     {Math.round(team.currentMetrics?.attendanceRate || 0)}%
                   </div>
                   <div className="text-xs text-gray-500">Asistencia</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-purple-600">
+                  <div className="text-base md:text-lg font-semibold text-purple-600">
                     {team.currentMetrics?.safetyIncidents === 0 ? '✅' : '⚠️'} {team.currentMetrics?.safetyIncidents || 0}
                   </div>
                   <div className="text-xs text-gray-500">Incidentes de Seguridad</div>
@@ -303,15 +307,17 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">📋 Información del Equipo</h4>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <strong>Tipo:</strong> {teamTypes[team.type] || team.type}
-                  </p>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <strong>Meta Productividad:</strong> {team.productivityTarget}%
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Creado:</strong> {formatDate(team.createdAt)}
-                  </p>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p>
+                      <strong>Tipo:</strong> {teamTypes[team.type] || team.type}
+                    </p>
+                    <p>
+                      <strong>Meta Productividad:</strong> {team.productivityTarget}%
+                    </p>
+                    <p>
+                      <strong>Creado:</strong> {formatDate(team.createdAt)}
+                    </p>
+                  </div>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">🔧 Especialidades</h4>

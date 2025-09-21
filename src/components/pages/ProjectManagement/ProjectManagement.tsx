@@ -1039,51 +1039,230 @@ export function ProjectManagement({
           </Card>
         </div>
 
-        {/* Lista de proyectos */}
-        <ListTemplate
-          title="Gestión de Proyectos"
-          subtitle={`${estadisticas.total} proyectos en total`}
-          items={itemsListTemplate}
-          layout={vistaActiva === 'lista' ? 'table' : 'cards'}
-          filters={configuracionFiltros}
-          enableSearch={true}
-          searchPlaceholder="Buscar proyectos..."
-          enableBulkSelect={hasPermission(usuario, 'acciones_masivas')}
-          actions={accionesDisponibles}
-          bulkActions={[
-            {
-              id: 'exportar',
-              label: 'Exportar Seleccionados',
-              variant: 'secondary',
-              onClick: () => handleAccionMasiva('exportar')
-            },
-            {
-              id: 'cambiar-estado',
-              label: 'Cambiar Estado',
-              variant: 'secondary',
-              onClick: () => handleAccionMasiva('cambiar-estado')
+        {/* Desktop Project Cards - Fixed Layout */}
+        <div className="hidden md:block">
+          <div className="bg-white rounded-lg border p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Gestión de Proyectos</h2>
+                <p className="text-gray-600">{estadisticas.total} proyectos en total</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="flex rounded-md shadow-sm">
+                  <button
+                    onClick={() => setVistaActiva('tarjetas')}
+                    className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
+                      vistaActiva === 'tarjetas'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-white text-gray-500 border-gray-300 hover:text-gray-700'
+                    }`}
+                  >
+                    Cards
+                  </button>
+                  <button
+                    onClick={() => setVistaActiva('lista')}
+                    className={`px-4 py-2 text-sm font-medium rounded-r-lg border-t border-r border-b ${
+                      vistaActiva === 'lista'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-white text-gray-500 border-gray-300 hover:text-gray-700'
+                    }`}
+                  >
+                    Tabla
+                  </button>
+                </div>
+                {accionesDisponibles.map((action) => (
+                  <Button
+                    key={action.id}
+                    variant={action.variant}
+                    onClick={action.onClick}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center space-x-4 mb-6">
+              <Input
+                placeholder="Buscar proyectos..."
+                value={filtrosAplicados.texto || ''}
+                onChange={(e) => handleFiltrosChange({ ...filtrosAplicados, texto: e.target.value })}
+                className="max-w-sm"
+              />
+              <select
+                value={filtrosAplicados.prioridad?.[0] || 'all'}
+                onChange={(e) => handleFiltrosChange({ 
+                  ...filtrosAplicados, 
+                  prioridad: e.target.value === 'all' ? [] : [e.target.value] 
+                })}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="all">Todos Prioridad</option>
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="critica">Crítica</option>
+              </select>
+              <select
+                value={filtrosAplicados.region?.[0] || 'all'}
+                onChange={(e) => handleFiltrosChange({ 
+                  ...filtrosAplicados, 
+                  region: e.target.value === 'all' ? [] : [e.target.value] 
+                })}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="all">Todos Región</option>
+                <option value="Metropolitana">R.M.</option>
+                <option value="Valparaíso">Valparaíso</option>
+                <option value="Biobío">Biobío</option>
+                <option value="Antofagasta">Antofagasta</option>
+              </select>
+            </div>
+
+            {/* Projects Grid/Table */}
+            {proyectosFiltrados.length > 0 ? (
+              <div className={vistaActiva === 'tarjetas' ? 'grid grid-cols-1 gap-6' : ''}>
+                {proyectosFiltrados.map((proyecto) => (
+                  <div key={proyecto.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{proyecto.nombre}</h3>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <p><span className="font-medium">Código:</span> {proyecto.codigo}</p>
+                          <p><span className="font-medium">Ubicación:</span> {proyecto.ubicacion.direccion}, {proyecto.ubicacion.comuna}</p>
+                          <p><span className="font-medium">Descripción:</span> {proyecto.descripcion}</p>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4 mt-4">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium">Progreso:</span>
+                            <div className="flex-1 bg-gray-200 rounded-full h-2 w-32">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full" 
+                                style={{ width: `${proyecto.avance.fisico}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium">{proyecto.avance.fisico}%</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-4 mt-3">
+                          <Badge variant={
+                            proyecto.estado === 'completado' ? 'success' :
+                            ['suspendido', 'cancelado'].includes(proyecto.estado) ? 'destructive' :
+                            proyecto.avance.fisico >= 70 ? 'warning' : 'secondary'
+                          }>
+                            {proyecto.estado}
+                          </Badge>
+                          <Badge variant={
+                            proyecto.tipo === 'residencial' ? 'secondary' : 'outline'
+                          }>
+                            {proyecto.tipo}
+                          </Badge>
+                          <Badge variant={
+                            proyecto.prioridad === 'critica' ? 'destructive' :
+                            proyecto.prioridad === 'alta' ? 'warning' : 'secondary'
+                          }>
+                            {proyecto.prioridad}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center space-x-6 mt-3 text-sm text-gray-600">
+                          <div className="flex items-center space-x-1">
+                            <span>👷</span>
+                            <span>{proyecto.equipo.jefeProyecto}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <span>🏗️</span>
+                            <span>{proyecto.equipo.jefeTerreno}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end space-y-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleProyectoSelect(proyecto)}
+                        >
+                          Ver
+                        </Button>
+                        {hasPermission(usuario, 'editar_proyecto') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditarProyecto(proyecto)}
+                          >
+                            Editar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay proyectos</h3>
+                <p className="text-gray-600 mb-4">No se encontraron proyectos que coincidan con los criterios de búsqueda.</p>
+                {hasPermission(usuario, 'crear_proyecto') && (
+                  <Button onClick={handleCrearProyecto}>
+                    Crear Primer Proyecto
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile View - Keep Original ListTemplate */}
+        <div className="block md:hidden">
+          <ListTemplate
+            title="Gestión de Proyectos"
+            subtitle={`${estadisticas.total} proyectos en total`}
+            items={itemsListTemplate}
+            layout={vistaActiva === 'lista' ? 'table' : 'cards'}
+            filters={configuracionFiltros}
+            enableSearch={true}
+            searchPlaceholder="Buscar proyectos..."
+            enableBulkSelect={hasPermission(usuario, 'acciones_masivas')}
+            actions={accionesDisponibles}
+            bulkActions={[
+              {
+                id: 'exportar',
+                label: 'Exportar Seleccionados',
+                variant: 'secondary',
+                onClick: () => handleAccionMasiva('exportar')
+              },
+              {
+                id: 'cambiar-estado',
+                label: 'Cambiar Estado',
+                variant: 'secondary',
+                onClick: () => handleAccionMasiva('cambiar-estado')
+              }
+            ]}
+            onItemSelect={(item) => {
+              const proyecto = proyectos.find(p => p.id === item.id)
+              if (proyecto) handleProyectoSelect(proyecto)
+            }}
+            onBulkSelect={(items) => {
+              setSeleccionMultiple(items.map(item => item.id))
+            }}
+            onFilter={handleFiltrosChange}
+            role={usuario.rol}
+            isLoading={isLoading}
+            error={error}
+            emptyStateTitle="No hay proyectos"
+            emptyStateMessage="No se encontraron proyectos que coincidan con los criterios de búsqueda."
+            emptyStateAction={
+              hasPermission(usuario, 'crear_proyecto') ? {
+                label: 'Crear Primer Proyecto',
+                onClick: handleCrearProyecto
+              } : undefined
             }
-          ]}
-          onItemSelect={(item) => {
-            const proyecto = proyectos.find(p => p.id === item.id)
-            if (proyecto) handleProyectoSelect(proyecto)
-          }}
-          onBulkSelect={(items) => {
-            setSeleccionMultiple(items.map(item => item.id))
-          }}
-          onFilter={handleFiltrosChange}
-          role={usuario.rol}
-          isLoading={isLoading}
-          error={error}
-          emptyStateTitle="No hay proyectos"
-          emptyStateMessage="No se encontraron proyectos que coincidan con los criterios de búsqueda."
-          emptyStateAction={
-            hasPermission(usuario, 'crear_proyecto') ? {
-              label: 'Crear Primer Proyecto',
-              onClick: handleCrearProyecto
-            } : undefined
-          }
-        />
+          />
+        </div>
       </div>
     )
   }

@@ -158,7 +158,7 @@ const getDefaultNavigationItems = (role: ConstructionRole): NavigationItem[] => 
     {
       id: 'tasks',
       label: 'Tareas',
-      icon: 'list-checks',
+      icon: 'clipboard-list',
       roles: ['SITE_MANAGER', 'SUPERVISOR', 'WORKER'],
       href: '/tasks',
     },
@@ -186,7 +186,7 @@ const getDefaultNavigationItems = (role: ConstructionRole): NavigationItem[] => 
     {
       id: 'reports',
       label: 'Reportes',
-      icon: 'chart-bar',
+      icon: 'file-text',
       roles: ['SITE_MANAGER', 'SUPERVISOR', 'QUALITY_INSPECTOR', 'EXECUTIVE'],
       href: '/reports',
     },

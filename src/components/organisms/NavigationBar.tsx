@@ -39,17 +39,17 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
     {
       label: 'Dashboard',
       href: '/dashboard',
-      icon: 'home'
+      icon: 'layout-dashboard'
     },
     {
       label: 'Proyectos', 
       href: '/projects',
-      icon: 'folder'
+      icon: 'building-2'
     },
     {
       label: 'Tareas',
       href: '/tasks',
-      icon: 'check-square',
+      icon: 'clipboard-list',
       roles: ['admin', 'gerencia', 'jefe_terreno', 'site_manager', 'oficina_tecnica']
     },
     {
@@ -73,7 +73,7 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
     {
       label: 'Reportes',
       href: '/reports',
-      icon: 'bar-chart-3'
+      icon: 'file-text'
     }
   ]
 

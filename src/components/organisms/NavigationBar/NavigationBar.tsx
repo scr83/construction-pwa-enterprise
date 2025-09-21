@@ -7,30 +7,10 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/atoms/Button'
 import { Typography } from '@/components/atoms/Typography'
+import { Icon } from '@/components/atoms/Icon'
 import { Avatar } from '@/components/atoms/Avatar'
 import { Badge } from '@/components/atoms/Badge'
 import { UserMenu } from '@/components/molecules/UserMenu'
-// Direct Lucide imports that WORK
-import {
-  HardHat,
-  LayoutDashboard,
-  Building2,
-  ClipboardList,
-  ShieldCheck,
-  Package,
-  Users,
-  FileText,
-  Menu,
-  X,
-  ChevronDown,
-  Bell,
-  WifiOff,
-  RefreshCw,
-  Phone,
-  ChevronRight,
-  AlertTriangle,
-  Info
-} from 'lucide-react'
 
 const navigationBarVariants = cva(
   'w-full bg-white border-b border-secondary-200 shadow-sm',
@@ -213,28 +193,6 @@ const getDefaultNavigationItems = (role: ConstructionRole): NavigationItem[] => 
   ]
 
   return baseItems.filter(item => item.roles.includes(role))
-}
-
-// Get icon component based on string name
-const getIconComponent = (iconName: string, size: number = 16) => {
-  switch (iconName) {
-    case 'layout-dashboard':
-      return <LayoutDashboard size={size} />
-    case 'building-2':
-      return <Building2 size={size} />
-    case 'clipboard-list':
-      return <ClipboardList size={size} />
-    case 'shield-check':
-      return <ShieldCheck size={size} />
-    case 'package':
-      return <Package size={size} />
-    case 'users':
-      return <Users size={size} />
-    case 'file-text':
-      return <FileText size={size} />
-    default:
-      return <LayoutDashboard size={size} />
-  }
 }
 
 const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(

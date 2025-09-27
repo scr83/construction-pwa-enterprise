@@ -1018,7 +1018,7 @@ export function ProjectManagement({
 
     // Vista principal de listado
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-6">
         {/* Estadísticas generales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-8">
           <Card className="p-4">

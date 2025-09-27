@@ -34,10 +34,10 @@ const buttonVariants = cva(
         link: 'text-primary-600 underline-offset-4 hover:underline active:text-primary-800',
       },
       size: {
-        // Extra small for dense interfaces (desktop only, still touch-friendly)
-        xs: 'h-10 px-3 text-xs md:h-8',
-        // Small for secondary actions
-        sm: 'h-10 px-4 text-sm md:h-9',
+        // Extra small - Construction worker friendly minimum 44px
+        xs: 'h-11 px-3 text-xs md:h-10',
+        // Small - Construction worker friendly minimum 44px  
+        sm: 'h-11 px-4 text-sm md:h-10',
         // Default size optimized for mobile touch
         default: 'h-11 px-6 text-sm',
         // Large for primary actions on mobile
@@ -46,7 +46,7 @@ const buttonVariants = cva(
         xl: 'h-14 px-10 text-lg',
         // Icon only sizes (always touch-friendly)
         icon: 'h-11 w-11',
-        'icon-sm': 'h-10 w-10 md:h-9 md:w-9',
+        'icon-sm': 'h-11 w-11 md:h-10 md:w-10',
         'icon-lg': 'h-12 w-12',
       },
       fullWidth: {

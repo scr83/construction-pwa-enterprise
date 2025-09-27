@@ -142,17 +142,21 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
               Administración de cuadrillas y personal de construcción - {session?.user?.name || 'Usuario'}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:gap-2">
             <Button
               variant="ghost"
               onClick={refreshTeams}
               disabled={refreshing}
+              fullWidth={true}
+              className="sm:w-auto"
             >
               {refreshing ? '🔄' : '↻'} Actualizar
             </Button>
             {canManageTeams && (
               <Button
                 onClick={() => setShowCreateForm(true)}
+                fullWidth={true}
+                className="sm:w-auto"
               >
                 👥 Crear Equipo
               </Button>
@@ -333,14 +337,15 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
 
               {/* Team Members */}
               <div className="mb-4">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-3">
                   <h4 className="font-medium text-gray-700">
                     👥 Miembros del Equipo ({team.members?.length || 0})
                   </h4>
                   {canModifyTeams && (
                     <Button
-                      size="sm"
                       onClick={() => setShowAddMemberForm(team.id)}
+                      fullWidth={true}
+                      className="sm:w-auto"
                     >
                       ➕ Agregar Miembro
                     </Button>
@@ -419,12 +424,13 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
               </div>
 
               {/* Action buttons based on role */}
-              <div className="flex gap-2 mt-4 pt-3 border-t">
+              <div className="flex flex-col space-y-3 md:flex-row md:space-y-0 md:gap-2 mt-4 pt-3 border-t">
                 {canModifyTeams && team.status === 'on_break' && (
                   <Button
-                    size="sm"
                     variant="success"
                     onClick={() => handleTeamStatusUpdate(team.id, 'active')}
+                    fullWidth={true}
+                    className="md:w-auto"
                   >
                     ✅ Activar Equipo
                   </Button>
@@ -432,9 +438,10 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
                 
                 {canModifyTeams && team.status === 'active' && (
                   <Button
-                    size="sm"
                     variant="warning"
                     onClick={() => handleTeamStatusUpdate(team.id, 'on_break')}
+                    fullWidth={true}
+                    className="md:w-auto"
                   >
                     ⏸️ Pausar Trabajo
                   </Button>
@@ -442,8 +449,9 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
                 
                 {canManageTeams && (
                   <Button
-                    size="sm"
                     onClick={() => window.open(`/teams/${team.id}`, '_blank')}
+                    fullWidth={true}
+                    className="md:w-auto"
                   >
                     📊 Ver Detalle
                   </Button>
@@ -451,9 +459,10 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
                 
                 {(team.currentMetrics?.productivity || 0) < 80 && canModifyTeams && (
                   <Button
-                    size="sm"
                     variant="warning"
                     onClick={() => window.open(`/teams/${team.id}/productivity`, '_blank')}
+                    fullWidth={true}
+                    className="md:w-auto"
                   >
                     ⚡ Mejorar Productividad
                   </Button>

@@ -180,7 +180,7 @@ export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
           <select
             {...register('role')}
             disabled={isLoading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-3 py-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="">Selecciona tu rol</option>
             {roleOptions.map((option) => (

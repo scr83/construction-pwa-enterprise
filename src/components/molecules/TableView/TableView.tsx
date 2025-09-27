@@ -190,7 +190,7 @@ export function TableView({
             e.stopPropagation()
             action.onClick(row)
           }}
-          className="h-8"
+          className="h-11 md:h-10"
         >
           {action.icon}
           <span className="ml-1 hidden sm:inline">{action.label}</span>
@@ -209,7 +209,7 @@ export function TableView({
               e.stopPropagation()
               action.onClick(row)
             }}
-            className="h-8 w-8 p-0"
+            className="h-11 w-11 p-0 md:h-10 md:w-10"
             title={action.label}
           >
             {action.icon}
@@ -220,7 +220,7 @@ export function TableView({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 w-8 p-0"
+            className="h-11 w-11 p-0 md:h-10 md:w-10"
           >
             <MoreVertical className="w-4 h-4" />
           </Button>

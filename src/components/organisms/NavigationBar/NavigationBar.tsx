@@ -570,7 +570,7 @@ const NavigationBar = React.forwardRef<HTMLDivElement, NavigationBarProps>(
                         <div
                           key={notification.id}
                           className={cn(
-                            'p-3 border-b border-secondary-100 cursor-pointer hover:bg-secondary-50',
+                            'p-4 min-h-[44px] border-b border-secondary-100 cursor-pointer hover:bg-secondary-50',
                             !notification.read && 'bg-blue-50'
                           )}
                           onClick={() => {

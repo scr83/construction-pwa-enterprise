@@ -691,7 +691,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
             
             {/* Manager */}
             <div 
-              className="flex items-center gap-2 mb-2 cursor-pointer hover:bg-secondary-50 rounded p-1 -m-1"
+              className="flex items-center gap-2 mb-2 cursor-pointer hover:bg-secondary-50 rounded p-2 min-h-[44px] -m-1"
               onClick={(e) => {
                 e.stopPropagation()
                 if (onManagerClick) onManagerClick(project.team.manager)

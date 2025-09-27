@@ -560,7 +560,7 @@ export function QualityControl({
             .map(inspeccion => (
               <div 
                 key={inspeccion.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                className="flex items-center justify-between p-4 min-h-[48px] bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
                 onClick={() => handleIniciarInspeccion(inspeccion)}
               >
                 <div className="flex-1">

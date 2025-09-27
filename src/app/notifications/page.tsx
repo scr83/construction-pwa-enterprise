@@ -247,7 +247,7 @@ export default function NotificationsPage() {
                   <select 
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value as NotificationType | 'all')}
-                    className="px-3 py-1 border border-gray-300 rounded text-sm"
+                    className="px-3 py-3 h-11 border border-gray-300 rounded text-sm"
                   >
                     <option value="all">Todos los tipos</option>
                     <option value="sistema">Sistema</option>

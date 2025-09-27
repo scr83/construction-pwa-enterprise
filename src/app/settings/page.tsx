@@ -240,7 +240,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Zona horaria</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                  <select className="w-full px-3 py-3 h-11 border border-gray-300 rounded-lg text-sm">
                     <option value="America/Santiago">Santiago, Chile (GMT-3)</option>
                     <option value="America/Buenos_Aires">Buenos Aires, Argentina (GMT-3)</option>
                     <option value="America/Lima">Lima, Perú (GMT-5)</option>
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Formato de fecha</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                  <select className="w-full px-3 py-3 h-11 border border-gray-300 rounded-lg text-sm">
                     <option value="dd/mm/yyyy">DD/MM/AAAA</option>
                     <option value="mm/dd/yyyy">MM/DD/AAAA</option>
                     <option value="yyyy-mm-dd">AAAA-MM-DD</option>

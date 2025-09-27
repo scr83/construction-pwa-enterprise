@@ -686,7 +686,7 @@ const QualityChecklist = React.forwardRef<HTMLDivElement, QualityChecklistProps>
             <div key={category.id} className="border border-secondary-200 rounded-lg">
               {/* Category Header */}
               <div 
-                className="flex items-center justify-between p-4 bg-secondary-50 cursor-pointer hover:bg-secondary-100 transition-colors"
+                className="flex items-center justify-between p-4 min-h-[48px] bg-secondary-50 cursor-pointer hover:bg-secondary-100 transition-colors"
                 onClick={() => {
                   const isExpanded = expandedCategories.includes(category.id)
                   if (onCategoryExpand) onCategoryExpand(category.id, !isExpanded)

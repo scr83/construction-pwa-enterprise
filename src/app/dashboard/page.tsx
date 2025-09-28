@@ -49,8 +49,8 @@ const calculateKPIs = {
   // Daily efficiency calculation
   getDailyEfficiency: (teams: Team[]): number => {
     if (!teams.length) return 0
-    const avgProductivity = this.getOverallProductivity(teams)
-    const utilizationRate = this.getTeamUtilization(teams)
+    const avgProductivity = calculateKPIs.getOverallProductivity(teams)
+    const utilizationRate = calculateKPIs.getTeamUtilization(teams)
     return Math.round((avgProductivity * utilizationRate) / 100)
   },
   

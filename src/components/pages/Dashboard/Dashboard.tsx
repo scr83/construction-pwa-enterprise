@@ -828,83 +828,118 @@ export function Dashboard({
     switch (vistaActiva) {
       case 'resumen':
         return (
-          <DashboardTemplate
-            user={{
-              name: usuario.nombre,
-              role: usuario.rol,
-              avatar: usuario.avatar
-            }}
-            widgets={[
-              {
-                id: 'kpis-principales',
-                type: 'metrics',
-                title: 'Indicadores Principales',
-                size: 'large',
-                data: dashboardData.kpisPrincipales.map(kpi => ({
-                  label: kpi.titulo,
-                  value: kpi.valor,
-                  type: kpi.tipo,
-                  trend: kpi.tendencia ? {
-                    direction: kpi.tendencia.direccion === 'subiendo' ? 'up' as const : 
-                              kpi.tendencia.direccion === 'bajando' ? 'down' as const : 'stable' as const,
-                    percentage: kpi.tendencia.porcentaje,
-                    period: kpi.tendencia.periodo
-                  } : undefined,
-                  status: kpi.estado === 'bueno' ? 'success' as const :
-                          kpi.estado === 'advertencia' ? 'warning' as const :
-                          kpi.estado === 'critico' ? 'error' as const : 'info' as const
-                }))
-              },
-              {
-                id: 'proyectos-activos',
-                type: 'list',
-                title: 'Proyectos Asignados',
-                size: 'medium',
-                data: proyectos.filter(p => usuario.proyectosAsignados.includes(p.id)).slice(0, 5).map(p => ({
-                  id: p.id,
-                  title: p.nombre,
-                  subtitle: `${p.estado} - ${p.avanceFisico}% completado`,
-                  status: p.avanceFisico >= 90 ? 'success' as const :
-                           p.avanceFisico >= 50 ? 'warning' as const : 'error' as const,
-                  onClick: () => onProyectoSelect?.(p.id)
-                }))
-              },
-              {
-                id: 'notificaciones-importantes',
-                type: 'notifications',
-                title: 'Notificaciones Importantes',
-                size: 'medium',
-                data: notificacionesFiltradas.filter(n => n.tipo === 'urgente' || n.tipo === 'importante').slice(0, 3)
-              },
-              {
-                id: 'acciones-rapidas',
-                type: 'actions',
-                title: 'Acciones Rápidas',
-                size: 'small',
-                data: accionesRapidasPorRol.slice(0, 4)
-              }
-            ]}
-            notifications={notificacionesFiltradas.map(n => ({
-              id: n.id,
-              title: n.titulo,
-              message: n.mensaje,
-              type: n.tipo === 'urgente' ? 'error' as const :
-                    n.tipo === 'importante' ? 'warning' as const : 'info' as const,
-              timestamp: n.fechaCreacion
-            }))}
-            quickActions={accionesRapidasPorRol.map(a => ({
-              id: a.id,
-              label: a.etiqueta,
-              icon: a.icono,
-              onClick: () => handleAccionRapida(a.id)
-            }))}
-            onRefresh={handleActualizar}
-            onSettingsOpen={onConfiguracion || (() => {
-              console.log('🔧 CONFIGURAR clicked')
-              // Redirigir a configuración
-              window.location.href = '/settings'
-            })}
-          />
+          <div className="p-6 space-y-6">
+            {/* Executive Header */}
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-gray-900">{dashboardData.titulo}</h1>
+              <p className="text-gray-600">{dashboardData.subtitulo}</p>
+            </div>
+
+            {/* Executive KPI Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {dashboardData.kpisPrincipales.map((kpi) => {
+                const getStatusColor = (estado: string) => {
+                  switch (estado) {
+                    case 'bueno': return 'bg-green-50 border-green-200 text-green-800'
+                    case 'advertencia': return 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                    case 'critico': return 'bg-red-50 border-red-200 text-red-800'
+                    default: return 'bg-blue-50 border-blue-200 text-blue-800'
+                  }
+                }
+
+                const getValueDisplay = () => {
+                  if (kpi.tipo === 'porcentaje') return `${kpi.valor}%`
+                  if (kpi.tipo === 'moneda') return `${Number(kpi.valor).toLocaleString()}M`
+                  return kpi.valor
+                }
+
+                return (
+                  <Card key={kpi.id} className={`p-6 hover:shadow-md transition-shadow border-2 ${getStatusColor(kpi.estado)}`}>
+                    <div className="space-y-3">
+                      {/* KPI Title */}
+                      <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                        {kpi.titulo}
+                      </h3>
+                      
+                      {/* KPI Value */}
+                      <div className="flex items-center justify-between">
+                        <div className="text-3xl font-bold">
+                          {getValueDisplay()}
+                        </div>
+                        {kpi.tendencia && (
+                          <div className={`flex items-center text-sm ${
+                            kpi.tendencia.direccion === 'subiendo' ? 'text-green-600' :
+                            kpi.tendencia.direccion === 'bajando' ? 'text-red-600' : 'text-gray-500'
+                          }`}>
+                            <span className="mr-1">
+                              {kpi.tendencia.direccion === 'subiendo' ? '↗' :
+                               kpi.tendencia.direccion === 'bajando' ? '↘' : '→'}
+                            </span>
+                            {kpi.tendencia.porcentaje}%
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Meta/Target */}
+                      {kpi.meta && (
+                        <div className="text-xs text-gray-500">
+                          Meta: {kpi.meta}{kpi.tipo === 'porcentaje' ? '%' : ''}
+                        </div>
+                      )}
+
+                      {/* Description */}
+                      {kpi.descripcion && (
+                        <div className="text-xs text-gray-600">
+                          {kpi.descripcion}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+
+            {/* Projects Summary Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+              {/* Active Projects */}
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Proyectos Activos</h3>
+                <div className="space-y-3">
+                  {proyectos.filter(p => usuario.proyectosAsignados.includes(p.id)).slice(0, 3).map(proyecto => (
+                    <div key={proyecto.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                         onClick={() => onProyectoSelect?.(proyecto.id)}>
+                      <div>
+                        <h4 className="font-medium">{proyecto.nombre}</h4>
+                        <p className="text-sm text-gray-600">{proyecto.estado} - {proyecto.avanceFisico}% completado</p>
+                      </div>
+                      <Badge variant={proyecto.avanceFisico >= 90 ? 'success' : proyecto.avanceFisico >= 50 ? 'warning' : 'destructive'}>
+                        {proyecto.avanceFisico}%
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Acciones Rápidas</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {accionesRapidasPorRol.slice(0, 4).map(accion => (
+                    <Button
+                      key={accion.id}
+                      variant="outline"
+                      className="h-16 flex flex-col items-center justify-center text-center"
+                      onClick={() => handleAccionRapida(accion.id)}
+                      disabled={!accion.disponible}
+                    >
+                      <span className="text-xl mb-1">{accion.icono}</span>
+                      <span className="text-xs">{accion.etiqueta}</span>
+                    </Button>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          </div>
         )
 
       case 'proyectos':

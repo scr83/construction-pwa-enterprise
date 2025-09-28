@@ -65,6 +65,8 @@ model User {
   supervisedTeams    Team[] @relation("TeamSupervisor")
   teamMemberships    TeamMember[] @relation("TeamMemberUser")
   productivityRecords DailyProductivity[] @relation("ProductivityRecorder")
+  assignedTasks      Task[] @relation("TaskAssignee")
+  createdTasks       Task[] @relation("TaskCreatedBy")
 
   @@map("users")
 }
@@ -96,6 +98,7 @@ model Project {
   projectAssignments  ProjectAssignment[]
   constructionActivities ConstructionActivity[]
   teams               Team[]
+  tasks               Task[]
 
   @@map("projects")
 }
@@ -360,4 +363,60 @@ model TeamMetrics {
   
   @@unique([teamId, week])
   @@map("team_metrics")
+}
+
+// Task Management Models
+model Task {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  assigneeId  String      @map("assignee_id")
+  assignee    User        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdById String      @map("created_by_id")
+  createdBy   User        @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  projectId   String      @map("project_id")
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status      TaskStatus  @default(PENDING)
+  priority    TaskPriority @default(MEDIUM)
+  category    TaskCategory @default(GENERAL)
+  dueDate     DateTime?   @map("due_date")
+  startDate   DateTime?   @map("start_date")
+  completedAt DateTime?   @map("completed_at")
+  estimatedHours Int?     @map("estimated_hours")
+  actualHours Int?        @map("actual_hours")
+  building    String?     // Building name/identifier
+  unit        String?     // Unit name/identifier
+  partida     String?     // Construction activity name
+  materials   String[]    // Array of required materials
+  prerequisites String[]  // Array of prerequisites
+  notes       String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DELAYED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskCategory {
+  GENERAL
+  STRUCTURE        // estructura
+  MATERIALS        // materiales
+  QUALITY          // calidad
+  INSTALLATIONS    // instalaciones
+  FINISHES         // acabados
+  TECHNICAL_OFFICE // oficina_tecnica
 }

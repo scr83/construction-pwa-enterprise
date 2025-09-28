@@ -5,6 +5,7 @@ import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
 import { useSession } from 'next-auth/react'
 import { useState, useEffect, useMemo } from 'react'
 import { teamsApi, type DashboardKPIs, type Team } from '@/lib/api/teams'
+import { tasksApi, type TaskMetrics } from '@/lib/api/tasks'
 
 // Real KPI calculations helper functions
 const calculateKPIs = {
@@ -247,6 +248,11 @@ export default function DashboardPage() {
   const [productivityLoading, setProductivityLoading] = useState(true)
   const [productivityError, setProductivityError] = useState<string | null>(null)
   
+  // Task metrics state
+  const [taskMetrics, setTaskMetrics] = useState<TaskMetrics | null>(null)
+  const [taskMetricsLoading, setTaskMetricsLoading] = useState(true)
+  const [taskMetricsError, setTaskMetricsError] = useState<string | null>(null)
+  
   // Generate project data
   const mockProyectos = useMemo(() => generateProjectData(), [])
   
@@ -307,6 +313,30 @@ export default function DashboardPage() {
     }
 
     loadProductivityData()
+  }, [session])
+  
+  // Load real task metrics
+  useEffect(() => {
+    const loadTaskMetrics = async () => {
+      if (!session?.user) return
+      
+      try {
+        setTaskMetricsError(null)
+        const response = await tasksApi.getTaskMetrics()
+        
+        if (response.success && response.data) {
+          setTaskMetrics(response.data.metrics)
+        } else {
+          setTaskMetricsError(response.error || 'Error cargando métricas de tareas')
+        }
+      } catch (error) {
+        setTaskMetricsError('Error de conexión')
+      } finally {
+        setTaskMetricsLoading(false)
+      }
+    }
+
+    loadTaskMetrics()
   }, [session])
 
   // Calculate comprehensive KPIs using real data
@@ -426,10 +456,16 @@ export default function DashboardPage() {
     {
       id: 'kpi-tareas-completadas',
       titulo: 'Tareas Completadas Hoy',
-      valor: teamKPIs.tasksCompleted,
+      valor: taskMetrics?.completedToday || 0,
       tipo: 'numero' as const,
-      estado: teamKPIs.tasksCompleted >= 20 ? 'bueno' as const : 
-              teamKPIs.tasksCompleted >= 10 ? 'advertencia' as const : 'critico' as const,
+      estado: (taskMetrics?.completedToday || 0) >= 5 ? 'bueno' as const : 
+              (taskMetrics?.completedToday || 0) >= 2 ? 'advertencia' as const : 'critico' as const,
+      tendencia: taskMetrics?.weeklyTrend ? {
+        direccion: taskMetrics.weeklyTrend > 0 ? 'subiendo' as const : 
+                   taskMetrics.weeklyTrend < 0 ? 'bajando' as const : 'estable' as const,
+        porcentaje: Math.abs(taskMetrics.weeklyTrend),
+        periodo: 'vs semana anterior'
+      } : undefined,
       ultimaActualizacion: new Date().toISOString()
     },
     {
@@ -460,6 +496,36 @@ export default function DashboardPage() {
       estado: teamKPIs.attendanceRate >= 95 ? 'bueno' as const : 
               teamKPIs.attendanceRate >= 85 ? 'advertencia' as const : 'critico' as const,
       meta: 95,
+      ultimaActualizacion: new Date().toISOString()
+    },
+    {
+      id: 'kpi-tasa-completitud-tareas',
+      titulo: 'Tasa de Completitud Tareas',
+      valor: taskMetrics?.completionRate || 0,
+      tipo: 'porcentaje' as const,
+      estado: (taskMetrics?.completionRate || 0) >= 85 ? 'bueno' as const : 
+              (taskMetrics?.completionRate || 0) >= 70 ? 'advertencia' as const : 'critico' as const,
+      meta: 85,
+      ultimaActualizacion: new Date().toISOString()
+    },
+    {
+      id: 'kpi-tareas-atrasadas',
+      titulo: 'Tareas Atrasadas',
+      valor: taskMetrics?.overdueTasks || 0,
+      tipo: 'numero' as const,
+      estado: (taskMetrics?.overdueTasks || 0) === 0 ? 'bueno' as const : 
+              (taskMetrics?.overdueTasks || 0) <= 3 ? 'advertencia' as const : 'critico' as const,
+      ultimaActualizacion: new Date().toISOString()
+    },
+    {
+      id: 'kpi-eficiencia-horaria',
+      titulo: 'Eficiencia Horaria',
+      valor: taskMetrics?.hourEfficiency || 100,
+      tipo: 'porcentaje' as const,
+      estado: (taskMetrics?.hourEfficiency || 100) >= 90 ? 'bueno' as const : 
+              (taskMetrics?.hourEfficiency || 100) >= 75 ? 'advertencia' as const : 'critico' as const,
+      meta: 90,
+      descripcion: 'Horas estimadas vs reales',
       ultimaActualizacion: new Date().toISOString()
     }
   ] : role === 'bodega' ? [
@@ -627,7 +693,7 @@ export default function DashboardPage() {
 
 
   // Loading state
-  if (teamsLoading || productivityLoading) {
+  if (teamsLoading || productivityLoading || taskMetricsLoading) {
     return (
       <ProtectedLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -648,8 +714,8 @@ export default function DashboardPage() {
         kpis={kpisPersonalizados}
         notificaciones={notificacionesPersonalizadas}
         accionesRapidas={mockAccionesRapidas}
-        isLoading={teamsLoading || productivityLoading}
-        error={teamsError || productivityError}
+        isLoading={teamsLoading || productivityLoading || taskMetricsLoading}
+        error={teamsError || productivityError || taskMetricsError}
         ultimaActualizacion={new Date().toISOString()}
       />
     </ProtectedLayout>

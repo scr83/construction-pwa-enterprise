@@ -268,6 +268,140 @@ async function main() {
 
   console.log('✅ Created weekly team metrics')
 
+  // Create sample tasks
+  console.log('🎯 Creating sample tasks...')
+  
+  const sampleTasks = [
+    {
+      title: 'Instalación de Moldajes - EA-101',
+      description: 'Instalación de moldajes de madera para hormigonado de muros perimetrales. Verificar nivelación y aplomado antes del hormigonado.',
+      priority: 'HIGH',
+      category: 'STRUCTURE',
+      building: 'Edificio A',
+      unit: 'EA-101',
+      partida: 'Levante de Estructuras',
+      estimatedHours: 16,
+      materials: ['Madera pino 2x4', 'Clavos 3 pulgadas', 'Alambre negro N°16', 'Aceite desmoldante'],
+      prerequisites: ['Fierros instalados', 'Instalaciones embebidas'],
+      dueDate: new Date('2025-10-15'),
+      startDate: new Date('2025-10-12')
+    },
+    {
+      title: 'Entrega de Kit de Materiales - EA-102',
+      description: 'Preparar y entregar kit de materiales para inicio de obra gruesa. Coordinar con jefe de terreno para recepción.',
+      priority: 'MEDIUM',
+      category: 'MATERIALS',
+      building: 'Edificio A',
+      unit: 'EA-102',
+      partida: 'Kit de Materiales',
+      estimatedHours: 4,
+      materials: ['Cemento 42.5kg x20 sacos', 'Fierro 8mm x50 metros', 'Gravilla x2 m³', 'Arena x1.5 m³'],
+      prerequisites: ['Autorización de inicio', 'Espacio de almacenaje despejado'],
+      dueDate: new Date('2025-10-16'),
+      startDate: new Date('2025-10-16')
+    },
+    {
+      title: 'Inspección de Calidad - Radier EA-103',
+      description: 'Inspección de calidad post-hormigonado de radier. Verificar resistencia, nivelación y acabado superficial.',
+      priority: 'HIGH',
+      category: 'QUALITY',
+      building: 'Edificio A',
+      unit: 'EA-103',
+      partida: 'Control de Calidad',
+      estimatedHours: 3,
+      materials: ['Esclerómetro', 'Nivel láser', 'Formularios de inspección'],
+      prerequisites: ['Radier curado 24hrs mínimo', 'Limpieza de superficie'],
+      dueDate: new Date('2025-10-13'),
+      startDate: new Date('2025-10-13'),
+      status: 'DELAYED',
+      notes: 'Pendiente por lluvia del día anterior'
+    },
+    {
+      title: 'Instalación Eléctrica - EA-104',
+      description: 'Instalación de canalizaciones eléctricas y cajas de registro. Coordinar con estructuras para perforaciones.',
+      priority: 'MEDIUM',
+      category: 'INSTALLATIONS',
+      building: 'Edificio A',
+      unit: 'EA-104',
+      partida: 'Instalaciones Eléctricas',
+      estimatedHours: 12,
+      materials: ['Conduit PVC 20mm', 'Cajas octogonales', 'Alambre THHN 12 AWG', 'Tacos y tornillos'],
+      prerequisites: ['Muros hormigonados', 'Planos de instalaciones actualizados'],
+      dueDate: new Date('2025-10-18'),
+      startDate: new Date('2025-10-17')
+    },
+    {
+      title: 'Pintura Interior - EA-105',
+      description: 'Aplicación de pintura interior en muros y cielos. Dos manos de pintura látex color blanco hueso.',
+      priority: 'LOW',
+      category: 'FINISHES',
+      building: 'Edificio A',
+      unit: 'EA-105',
+      partida: 'Terminaciones',
+      estimatedHours: 8,
+      actualHours: 9,
+      materials: ['Pintura látex blanca x4 galones', 'Rodillos', 'Brochas', 'Lijas grano 120'],
+      prerequisites: ['Pasta muro aplicada', 'Superficies lijadas'],
+      dueDate: new Date('2025-10-10'),
+      startDate: new Date('2025-10-08'),
+      status: 'COMPLETED',
+      completedAt: new Date('2025-10-10T17:30:00Z')
+    },
+    {
+      title: 'Revisión Técnica Estructural',
+      description: 'Revisión técnica de cálculos estructurales para modificación en vano de ventana. Requiere aprobación antes de ejecutar.',
+      priority: 'URGENT',
+      category: 'TECHNICAL_OFFICE',
+      building: 'Edificio A',
+      unit: 'General',
+      partida: 'Oficina Técnica',
+      estimatedHours: 6,
+      actualHours: 3,
+      materials: ['Planos estructurales', 'Software de cálculo', 'Normativa NCh'],
+      prerequisites: ['Solicitud de modificación aprobada', 'Planos de arquitectura actualizados'],
+      dueDate: new Date('2025-10-14'),
+      startDate: new Date('2025-10-13'),
+      status: 'IN_PROGRESS'
+    }
+  ]
+
+  // Create tasks for existing users
+  for (let i = 0; i < sampleTasks.length; i++) {
+    const taskData = sampleTasks[i]
+    const assigneeIndex = i % users.length
+    const creatorIndex = (i + 1) % users.length
+    const projectId = i % 2 === 0 ? project1.id : project2.id
+
+    await prisma.task.upsert({
+      where: { id: `task-${i + 1}` },
+      update: {},
+      create: {
+        id: `task-${i + 1}`,
+        title: taskData.title,
+        description: taskData.description,
+        assigneeId: users[assigneeIndex].id,
+        createdById: users[creatorIndex].id,
+        projectId: projectId,
+        status: taskData.status || 'PENDING',
+        priority: taskData.priority as any,
+        category: taskData.category as any,
+        dueDate: taskData.dueDate,
+        startDate: taskData.startDate,
+        completedAt: taskData.completedAt,
+        estimatedHours: taskData.estimatedHours,
+        actualHours: taskData.actualHours,
+        building: taskData.building,
+        unit: taskData.unit,
+        partida: taskData.partida,
+        materials: taskData.materials,
+        prerequisites: taskData.prerequisites,
+        notes: taskData.notes
+      }
+    })
+  }
+
+  console.log('✅ Created sample tasks for demonstration')
+
   // Summary
   const projectCount = await prisma.project.count()
   const teamCount = await prisma.team.count()

@@ -5,6 +5,8 @@ import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
 import { ErrorBoundary } from '@/components/atoms/ErrorBoundary'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { tasksApi, type Task, type CreateTaskData, type UpdateTaskData } from '@/lib/api/tasks'
 
 // Mock data para demostración - Tareas de construcción auténticas
 const mockUsuario = {
@@ -145,100 +147,220 @@ const mockTareas = [
 ]
 
 export default function TasksPage() {
-  console.log('🔍 TASKS PAGE LOADING:', {
-    component: 'TasksPage',
-    timestamp: new Date().toISOString(),
-    url: typeof window !== 'undefined' ? window.location.href : 'server-side'
-  })
-
   const { data: session } = useSession()
   const searchParams = useSearchParams()
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   
   // Get role from URL params with fallback
   const role = searchParams.get('role') || 
                (session?.user.role === 'EXECUTIVE' ? 'gerencia' : 'jefe_terreno')
   
-  console.log('🔍 TASKS PAGE SESSION & ROLE:', {
-    session: session ? 'Present' : 'Missing',
-    sessionUser: session?.user ? 'Present' : 'Missing',
-    role: role,
-    searchParamsRole: searchParams.get('role'),
-    sessionRole: session?.user?.role
-  })
-  
-  // Personalizar datos según rol del usuario autenticado
+  // Load tasks from API
+  useEffect(() => {
+    const loadTasks = async () => {
+      if (!session?.user) return
+      
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Apply role-based filters
+        let filters: any = {}
+        
+        if (role === 'bodega') {
+          filters.category = 'MATERIALS'
+        } else if (role === 'control_calidad') {
+          filters.category = 'QUALITY'
+        } else if (role === 'oficina_tecnica') {
+          filters.category = 'TECHNICAL_OFFICE'
+        }
+        // gerencia and jefe_terreno see all tasks
+
+        const response = await tasksApi.getTasks(filters)
+        
+        if (response.success && response.data) {
+          setTasks(response.data.tasks)
+        } else {
+          setError(response.error || 'Error al cargar tareas')
+        }
+      } catch (err) {
+        console.error('Error loading tasks:', err)
+        setError('Error de conexión')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadTasks()
+  }, [session, role])
+
+  // Map user data for component compatibility
   const usuario = {
-    ...mockUsuario,
     id: session?.user?.id || 'user-1',
     nombre: session?.user?.name || 'Usuario',
     rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad',
-    permisos: mockUsuario.permisos || ['ver_tareas'],
-    proyectosAsignados: mockUsuario.proyectosAsignados || []
+    permisos: ['ver_tareas', 'crear_tareas', 'editar_tareas'],
+    proyectosAsignados: []
   }
 
-  console.log('🔍 TASKS PAGE DATA PREPARED:', {
-    usuario: usuario ? 'Present' : 'Missing',
-    usuarioType: typeof usuario,
-    usuarioKeys: usuario ? Object.keys(usuario) : 'No usuario',
-    mockTareas: mockTareas ? `Array of ${mockTareas.length}` : 'Missing',
-    mockTareasType: typeof mockTareas,
-    isArray: Array.isArray(mockTareas),
-    firstTask: mockTareas?.[0] ? Object.keys(mockTareas[0]) : 'No first task'
-  })
+  // Convert API tasks to component format
+  const convertedTasks = tasks.map(task => ({
+    id: task.id,
+    title: task.title,
+    partida: task.partida || task.category,
+    building: task.building || 'Sin edificio',
+    unit: task.unit || 'Sin unidad',
+    assignedTo: `${task.assignee.name} (${task.assignee.role})`,
+    priority: task.priority.toLowerCase() as 'baja' | 'media' | 'alta' | 'urgente',
+    status: task.status === 'PENDING' ? 'programado' as const :
+           task.status === 'IN_PROGRESS' ? 'en_progreso' as const :
+           task.status === 'COMPLETED' ? 'completado' as const :
+           task.status === 'DELAYED' ? 'retrasado' as const :
+           'programado' as const,
+    category: task.category.toLowerCase() as 'estructura' | 'materiales' | 'calidad' | 'instalaciones' | 'acabados' | 'general',
+    dueDate: task.dueDate?.split('T')[0] || '',
+    startDate: task.startDate?.split('T')[0] || '',
+    description: task.description || '',
+    estimatedHours: task.estimatedHours || 0,
+    actualHours: task.actualHours || 0,
+    materials: task.materials || [],
+    prerequisites: task.prerequisites || [],
+    createdBy: task.createdBy.name,
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt,
+    notes: task.notes
+  }))
 
-  // Filtrar tareas según rol (demostración)
-  const tareasPersonalizadas = role === 'gerencia' ? mockTareas : 
-                              role === 'bodega' ? mockTareas.filter(t => t.category === 'materiales') :
-                              role === 'control_calidad' ? mockTareas.filter(t => t.category === 'calidad') :
-                              role === 'oficina_tecnica' ? mockTareas.filter(t => t.assignedTo.includes('Oficina Técnica') || t.category === 'calidad') :
-                              mockTareas // jefe_terreno ve todas
+  const handleTaskCreate = async (taskData: any) => {
+    try {
+      // Convert component format to API format
+      const createData: CreateTaskData = {
+        title: taskData.title,
+        description: taskData.description,
+        assigneeId: taskData.assigneeId, // This should come from the form
+        projectId: taskData.projectId || 'default-project', // Should be selected in form
+        priority: taskData.priority?.toUpperCase() as any || 'MEDIUM',
+        category: taskData.category?.toUpperCase() as any || 'GENERAL',
+        dueDate: taskData.dueDate,
+        startDate: taskData.startDate,
+        estimatedHours: taskData.estimatedHours,
+        building: taskData.building,
+        unit: taskData.unit,
+        partida: taskData.partida,
+        materials: taskData.materials || [],
+        prerequisites: taskData.prerequisites || [],
+        notes: taskData.notes
+      }
 
-  const handleTaskCreate = (taskData: any) => {
-    console.log('Crear nueva tarea:', taskData)
-    // En producción, aquí se llamaría al API
-    alert('Funcionalidad de crear tarea será implementada con backend')
+      const response = await tasksApi.createTask(createData)
+      
+      if (response.success && response.data) {
+        // Reload tasks
+        const tasksResponse = await tasksApi.getTasks()
+        if (tasksResponse.success && tasksResponse.data) {
+          setTasks(tasksResponse.data.tasks)
+        }
+        alert('Tarea creada exitosamente')
+      } else {
+        alert(`Error al crear tarea: ${response.error}`)
+      }
+    } catch (error) {
+      console.error('Error creating task:', error)
+      alert('Error al crear tarea')
+    }
   }
 
-  const handleTaskUpdate = (id: string, updates: any) => {
-    console.log('Actualizar tarea:', id, updates)
-    // En producción, aquí se llamaría al API
-    alert('Funcionalidad de editar tarea será implementada con backend')
+  const handleTaskUpdate = async (id: string, updates: any) => {
+    try {
+      // Convert updates to API format
+      const updateData: UpdateTaskData = {
+        status: updates.status === 'completado' ? 'COMPLETED' :
+               updates.status === 'en_progreso' ? 'IN_PROGRESS' :
+               updates.status === 'programado' ? 'PENDING' :
+               updates.status === 'retrasado' ? 'DELAYED' : undefined,
+        actualHours: updates.actualHours
+      }
+
+      const response = await tasksApi.updateTask(id, updateData)
+      
+      if (response.success && response.data) {
+        // Update local state
+        setTasks(prev => prev.map(task => 
+          task.id === id ? response.data!.task : task
+        ))
+        alert('Tarea actualizada exitosamente')
+      } else {
+        alert(`Error al actualizar tarea: ${response.error}`)
+      }
+    } catch (error) {
+      console.error('Error updating task:', error)
+      alert('Error al actualizar tarea')
+    }
   }
 
-  const handleTaskDelete = (id: string) => {
-    console.log('Eliminar tarea:', id)
-    // En producción, aquí se llamaría al API
-    alert('Funcionalidad de eliminar tarea será implementada con backend')
+  const handleTaskDelete = async (id: string) => {
+    try {
+      const response = await tasksApi.deleteTask(id)
+      
+      if (response.success) {
+        // Remove from local state
+        setTasks(prev => prev.filter(task => task.id !== id))
+        alert('Tarea eliminada exitosamente')
+      } else {
+        alert(`Error al eliminar tarea: ${response.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      alert('Error al eliminar tarea')
+    }
   }
 
-  console.log('🔍 TASKS PAGE ABOUT TO RENDER TaskManagement:', {
-    usuario: usuario,
-    tareasPersonalizadas: tareasPersonalizadas?.length || 0,
-    component: 'TaskManagement'
-  })
-
-  try {
+  if (loading) {
     return (
       <ProtectedLayout>
-        <ErrorBoundary>
-          <TaskManagement 
-            usuario={usuario}
-            tareas={tareasPersonalizadas}
-            onTaskCreate={handleTaskCreate}
-            onTaskUpdate={handleTaskUpdate}
-            onTaskDelete={handleTaskDelete}
-          />
-        </ErrorBoundary>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando tareas...</p>
+          </div>
+        </div>
       </ProtectedLayout>
     )
-  } catch (error) {
-    console.error('💥 TASKS PAGE RENDER ERROR:', {
-      error: error.message,
-      stack: error.stack,
-      component: 'TasksPage',
-      timestamp: new Date().toISOString(),
-      url: typeof window !== 'undefined' ? window.location.href : 'server-side'
-    })
-    throw error
   }
+
+  if (error) {
+    return (
+      <ProtectedLayout>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="text-red-600 mb-4">❌</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error al cargar tareas</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </ProtectedLayout>
+    )
+  }
+
+  return (
+    <ProtectedLayout>
+      <ErrorBoundary>
+        <TaskManagement 
+          usuario={usuario}
+          tareas={convertedTasks}
+          onTaskCreate={handleTaskCreate}
+          onTaskUpdate={handleTaskUpdate}
+          onTaskDelete={handleTaskDelete}
+        />
+      </ErrorBoundary>
+    </ProtectedLayout>
+  )
 }

@@ -23,13 +23,18 @@ interface CurrentUser {
 }
 
 interface NavigationBarProps {
-  currentUser: CurrentUser
+  currentUser?: CurrentUser
 }
 
 export function NavigationBar({ currentUser }: NavigationBarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const pathname = usePathname()
+
+  // Guard against undefined currentUser
+  if (!currentUser) {
+    return null
+  }
 
   // Map authentication roles to internal roles
   const normalizedRole = normalizeRole(currentUser.role)

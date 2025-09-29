@@ -775,73 +775,98 @@ export function QualityControl({
 
   // Renderizar formulario de nueva inspección
   const renderNuevaInspeccion = () => {
-    const seccionesFormulario = [
-      {
-        id: 'informacion-general',
-        title: 'Información General',
+    // Convert to new FormTemplate config structure
+    const formConfig = {
+      id: 'quality-inspection-form',
+      title: 'Nueva Inspección de Calidad',
+      description: 'Complete la información para crear una nueva inspección',
+      type: 'quality_inspection' as const,
+      singleStep: {
         fields: [
-          { id: 'nombre', label: 'Nombre de la Inspección', type: 'text' as const, required: true },
-          { id: 'codigo', label: 'Código', type: 'text' as const, required: true },
-          { id: 'descripcion', label: 'Descripción', type: 'textarea' as const },
+          // Información General
+          { name: 'nombre', label: 'Nombre de la Inspección', type: 'text' as const, required: true },
+          { name: 'codigo', label: 'Código', type: 'text' as const, required: true },
+          { name: 'descripcion', label: 'Descripción', type: 'textarea' as const },
           { 
-            id: 'tipo_inspeccion', 
+            name: 'tipo_inspeccion', 
             label: 'Tipo de Inspección', 
             type: 'select' as const, 
             required: true,
-            options: ['Estructural', 'Instalaciones', 'Terminaciones', 'Seguridad', 'Ambiental']
+            options: [
+              { value: 'estructural', label: 'Estructural' },
+              { value: 'instalaciones', label: 'Instalaciones' },
+              { value: 'terminaciones', label: 'Terminaciones' },
+              { value: 'seguridad', label: 'Seguridad' },
+              { value: 'ambiental', label: 'Ambiental' }
+            ]
           },
-          { id: 'especialidad', label: 'Especialidad', type: 'text' as const, required: true }
-        ]
-      },
-      {
-        id: 'ubicacion',
-        title: 'Ubicación y Contexto',
-        fields: [
+          { name: 'especialidad', label: 'Especialidad', type: 'text' as const, required: true },
+          // Ubicación
           { 
-            id: 'proyecto_id', 
+            name: 'proyecto_id', 
             label: 'Proyecto', 
             type: 'select' as const, 
             required: true,
-            options: usuario.proyectosAsignados // Esto debería ser dinámico
+            options: usuario.proyectosAsignados?.map(id => ({ value: id, label: `Proyecto ${id}` })) || []
           },
-          { id: 'ubicacion_fisica', label: 'Ubicación Física', type: 'text' as const, required: true },
-          { id: 'nivel', label: 'Nivel/Piso', type: 'text' as const },
-          { id: 'sector', label: 'Sector', type: 'text' as const },
-          { id: 'partida_constructiva', label: 'Partida Constructiva', type: 'text' as const },
-          { id: 'coordenadas', label: 'Coordenadas GPS', type: 'location' as const }
-        ]
-      },
-      {
-        id: 'programacion',
-        title: 'Programación',
-        fields: [
-          { id: 'fecha_programada', label: 'Fecha Programada', type: 'date' as const, required: true },
-          { id: 'hora_programada', label: 'Hora', type: 'time' as const, required: true },
-          { id: 'duracion_estimada', label: 'Duración Estimada (min)', type: 'number' as const, required: true }
-        ]
-      },
-      {
-        id: 'checklist',
-        title: 'Template de Checklist',
-        fields: [
+          { name: 'ubicacion_fisica', label: 'Ubicación Física', type: 'text' as const, required: true },
+          { name: 'nivel', label: 'Nivel/Piso', type: 'text' as const },
+          { name: 'sector', label: 'Sector', type: 'text' as const },
+          { name: 'partida_constructiva', label: 'Partida Constructiva', type: 'text' as const },
+          { name: 'coordenadas', label: 'Coordenadas GPS', type: 'location' as const },
+          // Programación
+          { name: 'fecha_programada', label: 'Fecha Programada', type: 'date' as const, required: true },
+          { name: 'hora_programada', label: 'Hora', type: 'time' as const, required: true },
+          { name: 'duracion_estimada', label: 'Duración Estimada (min)', type: 'number' as const, required: true },
+          // Checklist
           { 
-            id: 'template_checklist', 
+            name: 'template_checklist', 
             label: 'Template de Checklist', 
             type: 'select' as const, 
             required: true,
-            options: templatesChecklist.map(t => t.nombre)
+            options: templatesChecklist.map(t => ({ value: t.nombre, label: t.nombre }))
+          }
+        ],
+        sections: [
+          {
+            id: 'informacion-general',
+            title: 'Información General',
+            fields: ['nombre', 'codigo', 'descripcion', 'tipo_inspeccion', 'especialidad'],
+            collapsible: true,
+            icon: 'info'
+          },
+          {
+            id: 'ubicacion',
+            title: 'Ubicación y Contexto',
+            fields: ['proyecto_id', 'ubicacion_fisica', 'nivel', 'sector', 'partida_constructiva', 'coordenadas'],
+            collapsible: true,
+            icon: 'map-pin'
+          },
+          {
+            id: 'programacion',
+            title: 'Programación',
+            fields: ['fecha_programada', 'hora_programada', 'duracion_estimada'],
+            collapsible: true,
+            icon: 'calendar'
+          },
+          {
+            id: 'checklist',
+            title: 'Template de Checklist',
+            fields: ['template_checklist'],
+            collapsible: true,
+            icon: 'check-square'
           }
         ]
-      }
-    ]
+      },
+      showProgress: false,
+      allowDraft: true,
+      confirmOnExit: true
+    }
 
     return (
       <FormTemplate
-        mode="single"
-        title="Nueva Inspección de Calidad"
-        subtitle="Complete la información para crear una nueva inspección"
-        sections={seccionesFormulario}
-        role={usuario.rol}
+        config={formConfig}
+        showNavigation={false}
         onSubmit={async (datosFormulario) => {
           const templateSeleccionado = templatesChecklist.find(t => t.nombre === datosFormulario.template_checklist)
           
@@ -900,7 +925,14 @@ export function QualityControl({
           await onInspeccionCrear?.(nuevaInspeccion)
           setVistaActiva('inspecciones')
         }}
-        onCancel={() => setVistaActiva('inspecciones')}
+        secondaryActions={[
+          {
+            id: 'cancel',
+            label: 'Cancelar',
+            variant: 'ghost' as const,
+            action: () => setVistaActiva('inspecciones')
+          }
+        ]}
       />
     )
   }

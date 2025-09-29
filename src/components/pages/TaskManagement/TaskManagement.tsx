@@ -1,12 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdate, onTaskDelete }) {
   const [showTaskForm, setShowTaskForm] = useState(false)
+  const [projects, setProjects] = useState([])
+  const [users, setUsers] = useState([])
+  
   // Safety check for props
   const safeTareas = Array.isArray(tareas) ? tareas : []
   const safeUsuario = usuario || { rol: 'jefe_terreno', nombre: 'Usuario' }
+
+  // Load projects and users for task creation
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load projects
+        const projectsResponse = await fetch('/api/projects')
+        if (projectsResponse.ok) {
+          const projectsData = await projectsResponse.json()
+          setProjects(projectsData.projects || [])
+        }
+
+        // Load users
+        const usersResponse = await fetch('/api/users')
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json()
+          setUsers(usersData.users || [])
+        }
+      } catch (error) {
+        console.error('Error loading data for task creation:', error)
+      }
+    }
+
+    loadData()
+  }, [])
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -171,9 +199,9 @@ export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdat
               const taskData = {
                 title: formData.get('title'),
                 description: formData.get('description'),
-                assigneeId: safeUsuario.id,
-                projectId: 'proj-1',
-                priority: 'MEDIUM',
+                assigneeId: formData.get('assigneeId'),
+                projectId: formData.get('projectId'),
+                priority: formData.get('priority') || 'MEDIUM',
                 category: 'GENERAL',
                 partida: formData.get('partida') || 'General',
                 status: 'programado'
@@ -205,6 +233,57 @@ export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdat
                     className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                     placeholder="Descripción detallada de la tarea..."
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Asignar a *
+                  </label>
+                  <select
+                    name="assigneeId"
+                    required
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Seleccionar usuario...</option>
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Proyecto *
+                  </label>
+                  <select
+                    name="projectId"
+                    required
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Seleccionar proyecto...</option>
+                    {projects.map(project => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Prioridad
+                  </label>
+                  <select
+                    name="priority"
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="LOW">Baja</option>
+                    <option value="MEDIUM" selected>Media</option>
+                    <option value="HIGH">Alta</option>
+                    <option value="URGENT">Urgente</option>
+                  </select>
                 </div>
                 
                 <div>

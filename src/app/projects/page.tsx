@@ -22,13 +22,14 @@ export default function ProjectsPage() {
         setLoading(true)
         setError(null)
         
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/projects')
-        // const data = await response.json()
-        // setProjects(data.projects || [])
-        
-        // For now, use empty array to show proper empty state
-        setProjects([])
+        // Load projects from API
+        const response = await fetch('/api/projects')
+        if (response.ok) {
+          const data = await response.json()
+          setProjects(data.projects || [])
+        } else {
+          throw new Error('Failed to load projects')
+        }
         
       } catch (err) {
         setError('Error cargando proyectos')
@@ -42,6 +43,71 @@ export default function ProjectsPage() {
       loadProjects()
     }
   }, [session])
+
+  // Handle project creation
+  const handleProjectCreate = async (projectData: any) => {
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: projectData.name || projectData.titulo,
+          description: projectData.description || projectData.descripcion,
+          projectType: projectData.projectType || projectData.tipo || 'commercial',
+          startDate: projectData.startDate || projectData.fechaInicio,
+          endDate: projectData.endDate || projectData.fechaTermino
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        // Reload projects list
+        const projectsResponse = await fetch('/api/projects')
+        if (projectsResponse.ok) {
+          const projectsData = await projectsResponse.json()
+          setProjects(projectsData.projects || [])
+        }
+        alert('Proyecto creado exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error al crear proyecto: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error creating project:', error)
+      alert('Error al crear proyecto')
+    }
+  }
+
+  // Handle project update  
+  const handleProjectUpdate = async (projectId: string, projectData: any) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(projectData)
+      })
+
+      if (response.ok) {
+        // Reload projects list
+        const projectsResponse = await fetch('/api/projects')
+        if (projectsResponse.ok) {
+          const projectsData = await projectsResponse.json()
+          setProjects(projectsData.projects || [])
+        }
+        alert('Proyecto actualizado exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error al actualizar proyecto: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error updating project:', error)
+      alert('Error al actualizar proyecto')
+    }
+  }
   
   // Real usuario based on session
   const usuario = {
@@ -95,6 +161,8 @@ export default function ProjectsPage() {
         configuracion={configuracionPersonalizada}
         isLoading={loading}
         error={error}
+        onProyectoCrear={handleProjectCreate}
+        onProyectoActualizar={handleProjectUpdate}
       />
     </ProtectedLayout>
   )

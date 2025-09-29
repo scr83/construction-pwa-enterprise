@@ -49,31 +49,73 @@ export function CreateTeamForm({ onSubmit, onCancel, loading = false }: CreateTe
   useEffect(() => {
     const loadFormData = async () => {
       try {
-        // For now, use mock data - in production this would come from APIs
-        // Mock projects
-        const mockProjects = [
-          { id: 'proj-1', name: 'Edificio Las Condes' },
-          { id: 'proj-2', name: 'Condominio La Dehesa' },
-          { id: 'proj-3', name: 'Torre Empresarial' }
-        ]
-        
-        // Use current user as supervisor option
-        const currentUserSupervisor = session?.user ? [{
-          id: session.user.id,
-          name: session.user.name || 'Usuario Actual',
-          email: session.user.email || ''
-        }] : []
+        // Load real projects from API
+        try {
+          const projectsResponse = await fetch('/api/projects')
+          if (projectsResponse.ok) {
+            const projectsData = await projectsResponse.json()
+            if (projectsData.projects) {
+              setProjects(projectsData.projects.map((p: any) => ({ 
+                id: p.id, 
+                name: p.name 
+              })))
+            }
+          }
+        } catch (error) {
+          console.error('Error loading projects:', error)
+          // Fallback to mock projects
+          const mockProjects = [
+            { id: 'proj-1', name: 'Edificio Las Condes' },
+            { id: 'proj-2', name: 'Torre Empresarial' }
+          ]
+          setProjects(mockProjects)
+        }
 
-        setProjects(mockProjects)
-        setSupervisors(currentUserSupervisor)
+        // Load real users as supervisor options
+        try {
+          const usersResponse = await fetch('/api/users')
+          if (usersResponse.ok) {
+            const usersData = await usersResponse.json()
+            if (usersData.users) {
+              const userOptions = usersData.users.map((user: any) => ({
+                id: user.id,
+                name: user.name || 'Sin nombre',
+                email: user.email || 'Sin email'
+              }))
+              setSupervisors(userOptions)
+            }
+          }
+        } catch (error) {
+          console.error('Error loading users:', error)
+          // Fallback to current user only
+          const currentUserSupervisor = session?.user ? [{
+            id: session.user.id,
+            name: session.user.name || 'Usuario Actual',
+            email: session.user.email || ''
+          }] : []
+          setSupervisors(currentUserSupervisor)
+        }
         
-        // Set default project and supervisor if available
-        if (mockProjects.length > 0) {
-          setFormData(prev => ({ ...prev, projectId: mockProjects[0].id }))
-        }
-        if (currentUserSupervisor.length > 0) {
-          setFormData(prev => ({ ...prev, supervisorId: currentUserSupervisor[0].id }))
-        }
+        // Set defaults after loading data
+        setTimeout(() => {
+          // Set default project if available 
+          setFormData(prev => {
+            if (!prev.projectId) {
+              const firstProject = projects.length > 0 ? projects[0].id : 'proj-1'
+              return { ...prev, projectId: firstProject }
+            }
+            return prev
+          })
+          
+          // Set default supervisor if available
+          setFormData(prev => {
+            if (!prev.supervisorId) {
+              const firstSupervisor = supervisors.length > 0 ? supervisors[0].id : session?.user?.id || ''
+              return { ...prev, supervisorId: firstSupervisor }
+            }
+            return prev
+          })
+        }, 100)
         
         setLoadingData(false)
       } catch (error) {

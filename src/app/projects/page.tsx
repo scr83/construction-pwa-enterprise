@@ -10,6 +10,7 @@ export default function ProjectsPage() {
   const { data: session } = useSession()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
   // Map NextAuth role to projects role format with fallback
@@ -46,19 +47,17 @@ export default function ProjectsPage() {
 
   // Handle project creation
   const handleProjectCreate = async (projectData: any) => {
+    if (isSubmitting) return; // Prevent double submission
+    
     try {
-      console.log('🔍 PROJECT CREATE - Raw form data:', JSON.stringify(projectData, null, 2))
+      setIsSubmitting(true)
       
-      // Direct pass-through - API now accepts Spanish field names
-      const payload = {
-        nombre: projectData.nombre,
-        descripcion: projectData.descripcion,
-        tipo: projectData.tipo,
-        fechaInicio: projectData.fecha_inicio, // Form uses underscore, API expects camelCase
-        fechaTermino: projectData.fecha_termino
+      if (process.env.NODE_ENV === 'development') {
+        console.log('PROJECT CREATE - Form data:', projectData)
       }
       
-      console.log('🔍 PROJECT CREATE - Payload to API:', JSON.stringify(payload, null, 2))
+      // ✅ FIXED: Direct pass-through - field names now match API schema
+      const payload = projectData
       
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -79,12 +78,13 @@ export default function ProjectsPage() {
         alert('Proyecto creado exitosamente')
       } else {
         const error = await response.json()
-        console.error('🔍 PROJECT CREATE - API Error:', JSON.stringify(error, null, 2))
         alert(`Error al crear proyecto: ${error.error}`)
       }
     } catch (error) {
       console.error('Error creating project:', error)
       alert('Error al crear proyecto')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

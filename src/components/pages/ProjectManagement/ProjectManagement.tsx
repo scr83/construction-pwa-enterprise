@@ -726,11 +726,11 @@ export function ProjectManagement({
               { value: 'Antofagasta', label: 'Antofagasta' }
             ]
           },
-          { name: 'superficie_terreno', label: 'Superficie del Terreno (m²)', type: 'number' as const },
-          { name: 'superficie_construida', label: 'Superficie Construida (m²)', type: 'number' as const },
+          { name: 'superficieTerreno', label: 'Superficie del Terreno (m²)', type: 'number' as const },
+          { name: 'superficieConstruida', label: 'Superficie Construida (m²)', type: 'number' as const },
           { name: 'coordenadas', label: 'Coordenadas GPS', type: 'location' as const },
           // Financiero
-          { name: 'presupuesto_total', label: 'Presupuesto Total', type: 'number' as const, required: true },
+          { name: 'presupuestoTotal', label: 'Presupuesto Total', type: 'number' as const, required: true },
           { 
             name: 'moneda', 
             label: 'Moneda', 
@@ -746,13 +746,13 @@ export function ProjectManagement({
           { name: 'cliente', label: 'Cliente', type: 'text' as const },
           { name: 'contrato', label: 'Número de Contrato', type: 'text' as const },
           // Cronograma
-          { name: 'fecha_inicio', label: 'Fecha de Inicio', type: 'date' as const, required: true },
-          { name: 'fecha_termino', label: 'Fecha de Término', type: 'date' as const, required: true },
+          { name: 'fechaInicio', label: 'Fecha de Inicio', type: 'date' as const, required: true },
+          { name: 'fechaTermino', label: 'Fecha de Término', type: 'date' as const, required: true },
           // Equipo
-          { name: 'jefe_proyecto', label: 'Jefe de Proyecto', type: 'text' as const, required: true },
-          { name: 'jefe_terreno', label: 'Jefe de Terreno', type: 'text' as const, required: true },
-          { name: 'residente_obra', label: 'Residente de Obra', type: 'text' as const },
-          { name: 'ingeniero_construccion', label: 'Ingeniero de Construcción', type: 'text' as const },
+          { name: 'jefeProyecto', label: 'Jefe de Proyecto', type: 'text' as const, required: true },
+          { name: 'jefeTerreno', label: 'Jefe de Terreno', type: 'text' as const, required: true },
+          { name: 'residenteObra', label: 'Residente de Obra', type: 'text' as const },
+          { name: 'ingenieroConstruccion', label: 'Ingeniero de Construcción', type: 'text' as const },
           { name: 'arquitecto', label: 'Arquitecto', type: 'text' as const }
         ],
         sections: [
@@ -766,28 +766,28 @@ export function ProjectManagement({
           {
             id: 'ubicacion',
             title: 'Ubicación y Terreno',
-            fields: ['direccion', 'numero', 'comuna', 'region', 'superficie_terreno', 'superficie_construida', 'coordenadas'],
+            fields: ['direccion', 'numero', 'comuna', 'region', 'superficieTerreno', 'superficieConstruida', 'coordenadas'],
             collapsible: true,
             icon: 'map-pin'
           },
           {
             id: 'financiero',
             title: 'Información Financiera',
-            fields: ['presupuesto_total', 'moneda', 'cliente', 'contrato'],
+            fields: ['presupuestoTotal', 'moneda', 'cliente', 'contrato'],
             collapsible: true,
             icon: 'dollar-sign'
           },
           {
             id: 'cronograma',
             title: 'Cronograma',
-            fields: ['fecha_inicio', 'fecha_termino'],
+            fields: ['fechaInicio', 'fechaTermino'],
             collapsible: true,
             icon: 'calendar'
           },
           {
             id: 'equipo',
             title: 'Equipo de Trabajo',
-            fields: ['jefe_proyecto', 'jefe_terreno', 'residente_obra', 'ingeniero_construccion', 'arquitecto'],
+            fields: ['jefeProyecto', 'jefeTerreno', 'residenteObra', 'ingenieroConstruccion', 'arquitecto'],
             collapsible: true,
             icon: 'users'
           }
@@ -811,18 +811,18 @@ export function ProjectManagement({
           numero: proyectoSeleccionado.ubicacion.numero,
           comuna: proyectoSeleccionado.ubicacion.comuna,
           region: proyectoSeleccionado.ubicacion.region,
-          superficie_terreno: proyectoSeleccionado.ubicacion.superficieTerreno,
-          superficie_construida: proyectoSeleccionado.ubicacion.superficieConstruida,
-          presupuesto_total: proyectoSeleccionado.financiero.presupuestoTotal,
+          superficieTerreno: proyectoSeleccionado.ubicacion.superficieTerreno,
+          superficieConstruida: proyectoSeleccionado.ubicacion.superficieConstruida,
+          presupuestoTotal: proyectoSeleccionado.financiero.presupuestoTotal,
           moneda: proyectoSeleccionado.financiero.moneda,
           cliente: proyectoSeleccionado.cliente,
           contrato: proyectoSeleccionado.contrato,
-          fecha_inicio: proyectoSeleccionado.fechas.inicio,
-          fecha_termino: proyectoSeleccionado.fechas.terminoProgramado,
-          jefe_proyecto: proyectoSeleccionado.equipo.jefeProyecto,
-          jefe_terreno: proyectoSeleccionado.equipo.jefeTerreno,
-          residente_obra: proyectoSeleccionado.equipo.residenteObra,
-          ingeniero_construccion: proyectoSeleccionado.equipo.ingenieroConstruccion,
+          fechaInicio: proyectoSeleccionado.fechas.inicio,
+          fechaTermino: proyectoSeleccionado.fechas.terminoProgramado,
+          jefeProyecto: proyectoSeleccionado.equipo.jefeProyecto,
+          jefeTerreno: proyectoSeleccionado.equipo.jefeTerreno,
+          residenteObra: proyectoSeleccionado.equipo.residenteObra,
+          ingenieroConstruccion: proyectoSeleccionado.equipo.ingenieroConstruccion,
           arquitecto: proyectoSeleccionado.equipo.arquitecto
         } : {}}
         onSubmit={handleGuardarProyecto}

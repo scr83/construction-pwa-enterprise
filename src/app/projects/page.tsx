@@ -54,7 +54,7 @@ export default function ProjectsPage() {
         nombre: projectData.nombre,
         descripcion: projectData.descripcion,
         tipo: projectData.tipo,
-        fechaInicio: projectData.fecha_inicio,
+        fechaInicio: projectData.fecha_inicio, // Form uses underscore, API expects camelCase
         fechaTermino: projectData.fecha_termino
       }
       

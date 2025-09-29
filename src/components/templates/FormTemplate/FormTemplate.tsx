@@ -354,8 +354,8 @@ const FormTemplate = React.forwardRef<HTMLDivElement, FormTemplateProps>(
 
       const errors: string[] = []
 
-      // Required validation
-      if (fieldConfig.required && (!value || value === '' || (Array.isArray(value) && value.length === 0))) {
+      // Required validation - only show error if user has interacted with form
+      if (fieldConfig.required && (!value || value === '' || (Array.isArray(value) && value.length === 0)) && formState.isDirty) {
         errors.push(`${fieldConfig.label} es requerido`)
       }
 

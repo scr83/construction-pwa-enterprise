@@ -109,19 +109,19 @@ export default function ProjectsPage() {
     }
   }
   
-  // Real usuario based on session
+  // Real usuario based on session with proper null checks
   const usuario = {
-    id: session?.user.id || 'user-1',
-    nombre: session?.user.name || 'Usuario',
-    rol: role as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad',
-    permisos: role === 'gerencia' ? 
+    id: session?.user?.id || 'user-1',
+    nombre: session?.user?.name || 'Usuario',
+    rol: (role || 'jefe_terreno') as 'gerencia' | 'jefe_terreno' | 'bodega' | 'oficina_tecnica' | 'control_calidad',
+    permisos: (role === 'gerencia') ? 
       ['ver_proyectos', 'crear_proyecto', 'editar_presupuesto', 'ver_todos_proyectos'] :
-      role === 'jefe_terreno' ?
+      (role === 'jefe_terreno') ?
       ['ver_proyectos', 'crear_proyecto', 'editar_avance', 'asignar_trabajadores', 'ver_cronograma'] :
-      role === 'oficina_tecnica' ?
+      (role === 'oficina_tecnica') ?
       ['ver_proyectos', 'crear_proyecto', 'editar_planificacion', 'gestionar_materiales', 'crear_cronograma'] :
       ['ver_proyectos'],
-    proyectosAsignados: projects.map(p => p.id)
+    proyectosAsignados: (projects || []).map(p => p?.id).filter(Boolean)
   }
 
   // Configuration based on role
@@ -138,8 +138,8 @@ export default function ProjectsPage() {
     vistaDetallada: role === 'gerencia'
   }
 
-  // Don't render until session is loaded
-  if (!session) {
+  // Don't render until session is loaded and user exists
+  if (!session || !session.user || loading) {
     return (
       <ProtectedLayout>
         <div className="flex items-center justify-center min-h-screen">

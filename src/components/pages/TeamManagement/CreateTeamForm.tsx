@@ -57,19 +57,22 @@ export function CreateTeamForm({ onSubmit, onCancel, loading = false }: CreateTe
           { id: 'proj-3', name: 'Torre Empresarial' }
         ]
         
-        // Mock supervisors
-        const mockSupervisors = [
-          { id: 'user-1', name: 'Carlos Silva', email: 'carlos@constructorpro.cl' },
-          { id: 'user-2', name: 'María González', email: 'maria@constructorpro.cl' },
-          { id: 'user-3', name: 'Pedro Morales', email: 'pedro@constructorpro.cl' }
-        ]
+        // Use current user as supervisor option
+        const currentUserSupervisor = session?.user ? [{
+          id: session.user.id,
+          name: session.user.name || 'Usuario Actual',
+          email: session.user.email || ''
+        }] : []
 
         setProjects(mockProjects)
-        setSupervisors(mockSupervisors)
+        setSupervisors(currentUserSupervisor)
         
-        // Set default project if available
+        // Set default project and supervisor if available
         if (mockProjects.length > 0) {
           setFormData(prev => ({ ...prev, projectId: mockProjects[0].id }))
+        }
+        if (currentUserSupervisor.length > 0) {
+          setFormData(prev => ({ ...prev, supervisorId: currentUserSupervisor[0].id }))
         }
         
         setLoadingData(false)

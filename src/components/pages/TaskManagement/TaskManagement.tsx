@@ -1,6 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+
 export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdate, onTaskDelete }) {
+  const [showTaskForm, setShowTaskForm] = useState(false)
   // Safety check for props
   const safeTareas = Array.isArray(tareas) ? tareas : []
   const safeUsuario = usuario || { rol: 'jefe_terreno', nombre: 'Usuario' }
@@ -149,20 +152,91 @@ export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdat
       {(safeUsuario.rol === 'gerencia' || safeUsuario.rol === 'jefe_terreno') && onTaskCreate && (
         <div className="mt-8 text-center">
           <button
-            onClick={() => onTaskCreate({
-              title: 'Nueva Tarea - ' + new Date().toLocaleDateString(),
-              description: 'Tarea creada desde el panel de gestión',
-              assigneeId: safeUsuario.id, // Assign to current user initially
-              projectId: 'proj-1', // Default to first project - should be selected by user in proper form
-              priority: 'MEDIUM',
-              category: 'GENERAL',
-              partida: 'Por definir',
-              status: 'programado'
-            })}
+            onClick={() => setShowTaskForm(true)}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
           >
             ➕ Crear Nueva Tarea
           </button>
+        </div>
+      )}
+
+      {/* Task Creation Form Modal */}
+      {showTaskForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Crear Nueva Tarea</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.target)
+              const taskData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                assigneeId: safeUsuario.id,
+                projectId: 'proj-1',
+                priority: 'MEDIUM',
+                category: 'GENERAL',
+                partida: formData.get('partida') || 'General',
+                status: 'programado'
+              }
+              onTaskCreate(taskData)
+              setShowTaskForm(false)
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Título de la Tarea *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    required
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ej: Instalar moldajes EA-101"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descripción
+                  </label>
+                  <textarea
+                    name="description"
+                    rows="3"
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder="Descripción detallada de la tarea..."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Partida
+                  </label>
+                  <input
+                    type="text"
+                    name="partida"
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ej: Estructura, Instalaciones, etc."
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowTaskForm(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Crear Tarea
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -355,23 +355,24 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
                 {team.members && team.members.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {team.members.map(member => (
-                      <div key={member.id} className="p-3 border border-gray-200 rounded-lg bg-white">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h5 className="font-medium text-gray-900 text-sm">
-                              {member.user.name}
-                            </h5>
-                            <p className="text-xs text-gray-600 mb-1">
-                              {constructionRoles[member.role] || member.role}
-                            </p>
-                            <p className="text-xs text-gray-500 mb-1">
-                              Email: {member.user.email}
-                            </p>
-                            {member.user.phone && (
-                              <p className="text-xs text-gray-500 mb-1">
-                                📞 {member.user.phone}
+                      member && member.user ? (
+                        <div key={member.id} className="p-3 border border-gray-200 rounded-lg bg-white">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h5 className="font-medium text-gray-900 text-sm">
+                                {member.user.name || 'Sin nombre'}
+                              </h5>
+                              <p className="text-xs text-gray-600 mb-1">
+                                {member.role ? (constructionRoles[member.role] || member.role) : 'Sin rol asignado'}
                               </p>
-                            )}
+                              <p className="text-xs text-gray-500 mb-1">
+                                Email: {member.user.email || 'Sin email'}
+                              </p>
+                              {member.user.phone && (
+                                <p className="text-xs text-gray-500 mb-1">
+                                  📞 {member.user.phone}
+                                </p>
+                              )}
                             {member.hourlyRate && (
                               <p className="text-xs text-gray-500 mb-1">
                                 💰 ${member.hourlyRate.toLocaleString()}/hora
@@ -414,6 +415,7 @@ export function TeamManagement({ projectId }: TeamManagementProps) {
                           </p>
                         )}
                       </div>
+                      ) : null
                     ))}
                   </div>
                 ) : (

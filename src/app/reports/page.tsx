@@ -132,6 +132,26 @@ export default function ReportsPage() {
     }
   ] : []
 
+  // Handle report generation
+  const handleReporteGenerar = async (definicionId: string, parametros?: any) => {
+    try {
+      console.log('Generating report with:', { definicionId, parametros })
+      
+      // Simulate report generation
+      const reporteId = `rep-${Date.now()}`
+      
+      // In a real app, this would call an API
+      // await fetch('/api/reports', { method: 'POST', body: JSON.stringify({ definicionId, parametros }) })
+      
+      alert(`Reporte generado exitosamente con ID: ${reporteId}`)
+      return reporteId
+      
+    } catch (error) {
+      console.error('Error generating report:', error)
+      throw error
+    }
+  }
+
   return (
     <ProtectedLayout>
       <Reports 
@@ -140,6 +160,7 @@ export default function ReportsPage() {
         reportesGenerados={reportesGeneradosPorRole as any}
         proyectos={mockProyectos}
         configuracion={mockConfiguracion}
+        onReporteGenerar={handleReporteGenerar}
       />
     </ProtectedLayout>
   )

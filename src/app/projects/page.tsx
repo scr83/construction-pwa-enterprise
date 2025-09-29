@@ -53,11 +53,15 @@ export default function ProjectsPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          name: projectData.name || projectData.titulo,
-          description: projectData.description || projectData.descripcion,
-          projectType: projectData.projectType || projectData.tipo || 'commercial',
-          startDate: projectData.startDate || projectData.fechaInicio,
-          endDate: projectData.endDate || projectData.fechaTermino
+          name: projectData.nombre || projectData.name || projectData.titulo,
+          description: projectData.descripcion || projectData.description,
+          projectType: projectData.tipo === 'residencial' ? 'residential' :
+                      projectData.tipo === 'comercial' ? 'commercial' :
+                      projectData.tipo === 'industrial' ? 'industrial' :
+                      projectData.tipo === 'infraestructura' ? 'infrastructure' :
+                      projectData.projectType || projectData.tipo || 'commercial',
+          startDate: projectData.fecha_inicio || projectData.startDate || projectData.fechaInicio,
+          endDate: projectData.fecha_termino || projectData.endDate || projectData.fechaTermino
         })
       })
 

@@ -985,13 +985,65 @@ export function Reports({
             Cancelar
           </Button>
           <Button 
-            onClick={() => {
-              // Aquí iría la lógica de generar el reporte
-              console.log('Generar reporte con parámetros:', parametrosReporte)
-              setVistaActiva('reportes')
+            onClick={async () => {
+              try {
+                // Simulate report generation with loading state
+                setGenerandoReporte('new-report')
+                
+                // Collect form data (simplified for MVP)
+                const tipoReporte = (document.querySelector('select') as HTMLSelectElement)?.value || 'ejecutivo'
+                const fechaInicio = (document.querySelector('input[type="date"]') as HTMLInputElement)?.value
+                const fechaFin = (document.querySelector('input[type="date"]:last-child') as HTMLInputElement)?.value
+                
+                // Create new report object
+                const nuevoReporte = {
+                  id: `rep-${Date.now()}`,
+                  reporteDefinicionId: 'custom',
+                  nombre: `Reporte ${tipoReporte.charAt(0).toUpperCase() + tipoReporte.slice(1)} - ${new Date().toLocaleDateString('es-CL')}`,
+                  fechaGeneracion: new Date().toISOString(),
+                  estado: 'completado' as const,
+                  datos: {
+                    kpis: [
+                      { id: '1', titulo: 'Avance General', valor: 75, tipo: 'porcentaje', estado: 'bueno' },
+                      { id: '2', titulo: 'Presupuesto Ejecutado', valor: 68, tipo: 'porcentaje', estado: 'bueno' }
+                    ],
+                    graficos: [],
+                    tablas: [],
+                    textos: [`Reporte generado automáticamente el ${new Date().toLocaleDateString('es-CL')}`]
+                  },
+                  enviadoA: [],
+                  metadata: { 
+                    duracionGeneracion: 2000, 
+                    registrosProcesados: 500, 
+                    alertasGeneradas: 0, 
+                    version: '1.0' 
+                  }
+                }
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 2000))
+                
+                // Call the onReporteGenerar callback if provided
+                if (onReporteGenerar) {
+                  const reporteId = await onReporteGenerar('custom', { tipoReporte, fechaInicio, fechaFin })
+                  console.log('Report generated with ID:', reporteId)
+                } else {
+                  // Fallback: show success message
+                  alert(`Reporte "${nuevoReporte.nombre}" generado exitosamente`)
+                }
+                
+                setGenerandoReporte(null)
+                setVistaActiva('reportes')
+                
+              } catch (error) {
+                console.error('Error generating report:', error)
+                setGenerandoReporte(null)
+                alert('Error al generar el reporte')
+              }
             }}
+            loading={generandoReporte === 'new-report'}
           >
-            Generar Reporte
+            {generandoReporte === 'new-report' ? 'Generando...' : 'Generar Reporte'}
           </Button>
         </div>
       </Card>

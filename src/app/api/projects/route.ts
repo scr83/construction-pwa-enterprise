@@ -203,10 +203,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    console.log('🔍 API - Raw request body:', JSON.stringify(body, null, 2))
+    if (process.env.NODE_ENV === 'development') {
+      console.log('API - Raw request body:', body)
+    }
     
     const validatedData = createProjectSchema.parse(body)
-    console.log('🔍 API - Validated data:', JSON.stringify(validatedData, null, 2))
+    if (process.env.NODE_ENV === 'development') {
+      console.log('API - Validated data:', validatedData)
+    }
 
     // Create project with Spanish-to-English field mapping
     const project = await prisma.project.create({

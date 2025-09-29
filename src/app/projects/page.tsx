@@ -47,22 +47,28 @@ export default function ProjectsPage() {
   // Handle project creation
   const handleProjectCreate = async (projectData: any) => {
     try {
+      console.log('🔍 PROJECT CREATE - Raw form data:', projectData)
+      
+      const payload = {
+        name: projectData.nombre || projectData.name || projectData.titulo,
+        description: projectData.descripcion || projectData.description,
+        projectType: projectData.tipo === 'residencial' ? 'residential' :
+                    projectData.tipo === 'comercial' ? 'commercial' :
+                    projectData.tipo === 'industrial' ? 'industrial' :
+                    projectData.tipo === 'infraestructura' ? 'infrastructure' :
+                    projectData.projectType || projectData.tipo || 'commercial',
+        startDate: projectData.fecha_inicio || projectData.startDate || projectData.fechaInicio,
+        endDate: projectData.fecha_termino || projectData.endDate || projectData.fechaTermino
+      }
+      
+      console.log('🔍 PROJECT CREATE - Payload to API:', payload)
+      
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          name: projectData.nombre || projectData.name || projectData.titulo,
-          description: projectData.descripcion || projectData.description,
-          projectType: projectData.tipo === 'residencial' ? 'residential' :
-                      projectData.tipo === 'comercial' ? 'commercial' :
-                      projectData.tipo === 'industrial' ? 'industrial' :
-                      projectData.tipo === 'infraestructura' ? 'infrastructure' :
-                      projectData.projectType || projectData.tipo || 'commercial',
-          startDate: projectData.fecha_inicio || projectData.startDate || projectData.fechaInicio,
-          endDate: projectData.fecha_termino || projectData.endDate || projectData.fechaTermino
-        })
+        body: JSON.stringify(payload)
       })
 
       if (response.ok) {
@@ -76,6 +82,7 @@ export default function ProjectsPage() {
         alert('Proyecto creado exitosamente')
       } else {
         const error = await response.json()
+        console.error('🔍 PROJECT CREATE - API Error:', error)
         alert(`Error al crear proyecto: ${error.error}`)
       }
     } catch (error) {

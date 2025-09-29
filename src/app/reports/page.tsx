@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Reports } from '@/components/pages/Reports'
 import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
 import { useSearchParams } from 'next/navigation'
@@ -47,6 +48,7 @@ const mockProyectos = [
 export default function ReportsPage() {
   const searchParams = useSearchParams()
   const role = searchParams.get('role') || 'gerencia'
+  const [generatedReports, setGeneratedReports] = useState<any[]>([])
   
   // Personalizar usuario según rol
   const usuario = {
@@ -140,8 +142,33 @@ export default function ReportsPage() {
       // Simulate report generation
       const reporteId = `rep-${Date.now()}`
       
-      // In a real app, this would call an API
-      // await fetch('/api/reports', { method: 'POST', body: JSON.stringify({ definicionId, parametros }) })
+      // Create new report object
+      const newReport = {
+        id: reporteId,
+        reporteDefinicionId: definicionId,
+        nombre: `Reporte ${parametros?.tipoReporte || 'Personalizado'} - ${new Date().toLocaleDateString('es-CL')}`,
+        fechaGeneracion: new Date().toISOString(),
+        estado: 'completado',
+        datos: {
+          kpis: [
+            { id: '1', titulo: 'Avance General', valor: 75, tipo: 'porcentaje', estado: 'bueno' },
+            { id: '2', titulo: 'Presupuesto Ejecutado', valor: 68, tipo: 'porcentaje', estado: 'bueno' }
+          ],
+          graficos: [],
+          tablas: [],
+          textos: [`Reporte generado automáticamente el ${new Date().toLocaleDateString('es-CL')}`]
+        },
+        enviadoA: [],
+        metadata: { 
+          duracionGeneracion: 2000, 
+          registrosProcesados: 500, 
+          alertasGeneradas: 0, 
+          version: '1.0' 
+        }
+      }
+      
+      // Add to generated reports list
+      setGeneratedReports(prev => [newReport, ...prev])
       
       alert(`Reporte generado exitosamente con ID: ${reporteId}`)
       return reporteId
@@ -157,7 +184,7 @@ export default function ReportsPage() {
       <Reports 
         usuario={usuario}
         reportesDefinidos={reportesDefinidosPorRole as any}
-        reportesGenerados={reportesGeneradosPorRole as any}
+        reportesGenerados={[...generatedReports, ...reportesGeneradosPorRole] as any}
         proyectos={mockProyectos}
         configuracion={mockConfiguracion}
         onReporteGenerar={handleReporteGenerar}

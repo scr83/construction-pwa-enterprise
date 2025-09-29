@@ -235,12 +235,18 @@ export default function TasksPage() {
 
   const handleTaskCreate = async (taskData: any) => {
     try {
+      // Validate required fields
+      if (!taskData.title || !taskData.assigneeId || !taskData.projectId) {
+        alert('Error: Faltan campos requeridos para crear la tarea')
+        return
+      }
+
       // Convert component format to API format
       const createData: CreateTaskData = {
         title: taskData.title,
         description: taskData.description,
-        assigneeId: taskData.assigneeId, // This should come from the form
-        projectId: taskData.projectId || 'default-project', // Should be selected in form
+        assigneeId: taskData.assigneeId,
+        projectId: taskData.projectId,
         priority: taskData.priority?.toUpperCase() as any || 'MEDIUM',
         category: taskData.category?.toUpperCase() as any || 'GENERAL',
         dueDate: taskData.dueDate,

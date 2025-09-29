@@ -150,10 +150,14 @@ export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdat
         <div className="mt-8 text-center">
           <button
             onClick={() => onTaskCreate({
-              title: 'Nueva Tarea',
+              title: 'Nueva Tarea - ' + new Date().toLocaleDateString(),
+              description: 'Tarea creada desde el panel de gestión',
+              assigneeId: safeUsuario.id, // Assign to current user initially
+              projectId: 'proj-1', // Default to first project - should be selected by user in proper form
+              priority: 'MEDIUM',
+              category: 'GENERAL',
               partida: 'Por definir',
-              status: 'programado',
-              priority: 'media'
+              status: 'programado'
             })}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
           >

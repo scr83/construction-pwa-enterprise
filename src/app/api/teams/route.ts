@@ -175,18 +175,28 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validatedData = createTeamSchema.parse(body)
 
-    // Verify project exists and user has access
-    const project = await prisma.project.findFirst({
+    // Verify project exists
+    const project = await prisma.project.findUnique({
       where: { 
-        id: validatedData.projectId,
-        projectAssignments: {
-          some: { userId: session.user.id }
-        }
+        id: validatedData.projectId
       }
     })
 
     if (!project) {
-      return NextResponse.json({ error: 'Proyecto no encontrado o sin acceso' }, { status: 404 })
+      return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 })
+    }
+
+    // Check access permissions
+    const hasAccess = ['EXECUTIVE', 'ADMIN'].includes(session.user.role) ||
+      await prisma.projectAssignment.findFirst({
+        where: {
+          userId: session.user.id,
+          projectId: validatedData.projectId
+        }
+      })
+
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Sin acceso al proyecto' }, { status: 403 })
     }
 
     // Verify supervisor exists

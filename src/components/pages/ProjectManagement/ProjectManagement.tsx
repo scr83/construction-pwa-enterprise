@@ -305,7 +305,13 @@ export function ProjectManagement({
   esMobile = false,
   isLoading = false,
   error,
-  filtros = {},
+  filtros = {
+    estado: [],
+    tipo: [],
+    prioridad: [],
+    region: [],
+    responsable: []
+  },
   onProyectoCrear,
   onProyectoActualizar,
   onProyectoEliminar,

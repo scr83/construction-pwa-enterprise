@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get projects based on user access
-    const projects = await prisma.project.findMany({
+    const dbProjects = await prisma.project.findMany({
       where: {
         OR: [
           // User has project assignment
@@ -52,6 +52,43 @@ export async function GET(req: NextRequest) {
         name: 'asc'
       }
     })
+
+    // Transform to expected format for ProjectManagement component
+    const projects = dbProjects.map(project => ({
+      id: project.id,
+      titulo: project.name,
+      descripcion: project.description || '',
+      codigo: `${project.projectType.toUpperCase()}-${project.id.slice(-3)}`,
+      tipo: project.projectType,
+      estado: project.status.toLowerCase(),
+      fechas: {
+        inicio: project.startDate?.toISOString() || new Date().toISOString(),
+        finPrevisto: project.endDate?.toISOString() || new Date().toISOString(),
+        ultimaModificacion: project.createdAt.toISOString()
+      },
+      avance: {
+        fisico: Math.floor(Math.random() * 40) + 40, // Mock data for now
+        financiero: Math.floor(Math.random() * 30) + 50, // Mock data for now  
+        cronograma: Math.floor(Math.random() * 20) + 75, // Mock data for now
+        partidasCompletadas: Math.floor(Math.random() * 15) + 5,
+        partidasTotales: Math.floor(Math.random() * 10) + 20
+      },
+      equipo: {
+        jefeProyecto: session.user.name || 'Sin asignar',
+        jefeTerreno: 'Por asignar',
+        totalMiembros: Math.floor(Math.random() * 15) + 5
+      },
+      presupuesto: {
+        total: Math.floor(Math.random() * 500000000) + 1000000000,
+        ejecutado: Math.floor(Math.random() * 300000000) + 200000000,
+        disponible: Math.floor(Math.random() * 200000000) + 100000000
+      },
+      ubicacion: {
+        region: 'Metropolitana',
+        comuna: 'Las Condes',
+        direccion: 'Dirección del proyecto'
+      }
+    }))
 
     return NextResponse.json({ projects })
 

@@ -152,6 +152,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showTaskForm, setShowTaskForm] = useState(false)
   
   // Get role from URL params with fallback
   const role = searchParams.get('role') || 
@@ -359,12 +360,42 @@ export default function TasksPage() {
   return (
     <ProtectedLayout>
       <ErrorBoundary>
+        {/* Tasks Page Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Gestión de Tareas</h1>
+              <p className="text-gray-600 mt-1">
+                Gestiona y supervisa todas las tareas del proyecto
+              </p>
+            </div>
+            
+            {/* Top Create Task Button */}
+            {(usuario.rol === 'gerencia' || usuario.rol === 'jefe_terreno') && (
+              <button
+                onClick={() => setShowTaskForm(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Crear Nueva Tarea
+              </button>
+            )}
+          </div>
+        </div>
+
         <TaskManagement 
           usuario={usuario}
           tareas={convertedTasks}
-          onTaskCreate={handleTaskCreate}
+          onTaskCreate={(taskData) => {
+            handleTaskCreate(taskData)
+            setShowTaskForm(false)
+          }}
           onTaskUpdate={handleTaskUpdate}
           onTaskDelete={handleTaskDelete}
+          showTaskForm={showTaskForm}
+          setShowTaskForm={setShowTaskForm}
         />
       </ErrorBoundary>
     </ProtectedLayout>

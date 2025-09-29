@@ -2,10 +2,22 @@
 
 import { useState, useEffect } from 'react'
 
-export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdate, onTaskDelete }) {
-  const [showTaskForm, setShowTaskForm] = useState(false)
+export function TaskManagement({ 
+  usuario, 
+  tareas = [], 
+  onTaskCreate, 
+  onTaskUpdate, 
+  onTaskDelete,
+  showTaskForm = false,
+  setShowTaskForm = () => {}
+}) {
+  const [localShowTaskForm, setLocalShowTaskForm] = useState(false)
   const [projects, setProjects] = useState([])
   const [users, setUsers] = useState([])
+  
+  // Use external state if provided, otherwise use local state
+  const isTaskFormVisible = showTaskForm || localShowTaskForm
+  const handleSetShowTaskForm = setShowTaskForm !== (() => {}) ? setShowTaskForm : setLocalShowTaskForm
   
   // Safety check for props
   const safeTareas = Array.isArray(tareas) ? tareas : []
@@ -180,7 +192,7 @@ export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdat
       {(safeUsuario.rol === 'gerencia' || safeUsuario.rol === 'jefe_terreno') && onTaskCreate && (
         <div className="mt-8 text-center">
           <button
-            onClick={() => setShowTaskForm(true)}
+            onClick={() => handleSetShowTaskForm(true)}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
           >
             ➕ Crear Nueva Tarea
@@ -189,7 +201,7 @@ export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdat
       )}
 
       {/* Task Creation Form Modal */}
-      {showTaskForm && (
+      {isTaskFormVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Crear Nueva Tarea</h3>
@@ -207,7 +219,7 @@ export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdat
                 status: 'programado'
               }
               onTaskCreate(taskData)
-              setShowTaskForm(false)
+              handleSetShowTaskForm(false)
             }}>
               <div className="space-y-4">
                 <div>
@@ -302,7 +314,7 @@ export function TaskManagement({ usuario, tareas = [], onTaskCreate, onTaskUpdat
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowTaskForm(false)}
+                  onClick={() => handleSetShowTaskForm(false)}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
                 >
                   Cancelar

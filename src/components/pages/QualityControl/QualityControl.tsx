@@ -1375,15 +1375,7 @@ export function QualityControl({
   // Versión desktop
   return (
     <div className={cn(qualityControlVariants({ mode, layout, inspectionType }), className)} {...props}>
-      {/* Navigation Bar */}
-      <NavigationBar 
-        currentUser={{
-          id: usuario.id,
-          name: usuario.nombre,
-          role: 'QUALITY_INSPECTOR',
-          isOnline: true
-        }}
-      />
+      {/* Navigation Bar removed - ProtectedLayout already provides it */}
       
       {/* Header de navegación */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">

@@ -26,7 +26,7 @@ const formFieldVariants = cva('w-full space-y-2', {
 })
 
 export interface FormFieldProps
-  extends Omit<InputProps, 'label' | 'helperText' | 'errorMessage' | 'successMessage'>,
+  extends Omit<InputProps, 'label' | 'helperText' | 'errorMessage' | 'successMessage' | 'onChange'>,
     VariantProps<typeof formFieldVariants> {
   // Enhanced label options
   label: string
@@ -59,6 +59,9 @@ export interface FormFieldProps
   // Form integration
   name: string
   onValidation?: (isValid: boolean, fieldName: string) => void
+  
+  // Support both event and value onChange patterns
+  onChange?: ((value: string) => void) | ((event: React.ChangeEvent<HTMLInputElement>) => void)
 }
 
 const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
@@ -85,6 +88,7 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       tooltip,
       name,
       onValidation,
+      onChange,
       ...inputProps
     },
     ref
@@ -158,11 +162,17 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
         onValidation(isValid, name)
       }
       
-      // Call original onChange if provided
-      if (inputProps.onChange) {
-        inputProps.onChange(e)
+      // Call original onChange if provided - support both patterns
+      if (onChange) {
+        // Try to determine if onChange expects value or event
+        try {
+          onChange(e.target.value)
+        } catch (error) {
+          // Fallback to event if value doesn't work
+          onChange(e as any)
+        }
       }
-    }, [required, inputProps.type, inputProps.onChange, onValidation, name])
+    }, [required, inputProps.type, onChange, onValidation, name])
     
     // Format error messages
     const formatErrorMessages = (errors: string | string[]) => {

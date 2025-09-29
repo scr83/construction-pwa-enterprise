@@ -87,6 +87,27 @@ export async function GET(req: NextRequest) {
         region: 'Metropolitana',
         comuna: 'Las Condes',
         direccion: 'Dirección del proyecto'
+      },
+      calidad: {
+        inspeccionesRealizadas: Math.floor(Math.random() * 10) + 5,
+        inspeccionesPendientes: Math.floor(Math.random() * 3),
+        noConformidades: Math.floor(Math.random() * 2),
+        cumplimientoNormativa: Math.floor(Math.random() * 10) + 90
+      },
+      materiales: {
+        stockCritico: Math.floor(Math.random() * 3),
+        pedidosPendientes: Math.floor(Math.random() * 2),
+        entregas: Math.floor(Math.random() * 5) + 2
+      },
+      riesgos: {
+        alto: Math.floor(Math.random() * 2),
+        medio: Math.floor(Math.random() * 3) + 1,
+        bajo: Math.floor(Math.random() * 4) + 2
+      },
+      productividad: {
+        indiceGeneral: Math.floor(Math.random() * 20) + 75,
+        eficienciaRecursos: Math.floor(Math.random() * 15) + 80,
+        cumplimientoCronograma: Math.floor(Math.random() * 25) + 70
       }
     }))
 

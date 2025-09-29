@@ -4,13 +4,24 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
-// Schema for creating a new project
+// Value mapping functions
+function mapTipoToProjectType(tipo: string): 'residential' | 'commercial' | 'industrial' | 'infrastructure' {
+  const mapping = {
+    'residencial': 'residential' as const,
+    'comercial': 'commercial' as const,
+    'industrial': 'industrial' as const,
+    'infraestructura': 'infrastructure' as const
+  }
+  return mapping[tipo] || 'commercial'
+}
+
+// Schema for creating a new project (Spanish fields)
 const createProjectSchema = z.object({
-  name: z.string().min(1, 'Nombre del proyecto es requerido'),
-  description: z.string().optional(),
-  projectType: z.enum(['residential', 'commercial', 'industrial', 'infrastructure']).optional().default('commercial'),
-  startDate: z.string().optional(),
-  endDate: z.string().optional()
+  nombre: z.string().min(1, 'Nombre del proyecto es requerido'),
+  descripcion: z.string().optional(),
+  tipo: z.enum(['residencial', 'comercial', 'industrial', 'infraestructura']).optional().default('comercial'),
+  fechaInicio: z.string().optional(),
+  fechaTermino: z.string().optional()
 })
 
 // GET /api/projects - Get all projects
@@ -192,17 +203,20 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
+    console.log('🔍 API - Raw request body:', JSON.stringify(body, null, 2))
+    
     const validatedData = createProjectSchema.parse(body)
+    console.log('🔍 API - Validated data:', JSON.stringify(validatedData, null, 2))
 
-    // Create project
+    // Create project with Spanish-to-English field mapping
     const project = await prisma.project.create({
       data: {
-        name: validatedData.name,
-        description: validatedData.description,
-        projectType: validatedData.projectType,
+        name: validatedData.nombre,
+        description: validatedData.descripcion,
+        projectType: mapTipoToProjectType(validatedData.tipo),
         status: 'PLANNING',
-        startDate: validatedData.startDate ? new Date(validatedData.startDate) : new Date(),
-        endDate: validatedData.endDate ? new Date(validatedData.endDate) : null
+        startDate: validatedData.fechaInicio ? new Date(validatedData.fechaInicio) : new Date(),
+        endDate: validatedData.fechaTermino ? new Date(validatedData.fechaTermino) : null
       },
       select: {
         id: true,

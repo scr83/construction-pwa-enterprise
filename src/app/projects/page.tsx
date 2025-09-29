@@ -47,21 +47,18 @@ export default function ProjectsPage() {
   // Handle project creation
   const handleProjectCreate = async (projectData: any) => {
     try {
-      console.log('🔍 PROJECT CREATE - Raw form data:', projectData)
+      console.log('🔍 PROJECT CREATE - Raw form data:', JSON.stringify(projectData, null, 2))
       
+      // Direct pass-through - API now accepts Spanish field names
       const payload = {
-        name: projectData.nombre || projectData.name || projectData.titulo,
-        description: projectData.descripcion || projectData.description,
-        projectType: projectData.tipo === 'residencial' ? 'residential' :
-                    projectData.tipo === 'comercial' ? 'commercial' :
-                    projectData.tipo === 'industrial' ? 'industrial' :
-                    projectData.tipo === 'infraestructura' ? 'infrastructure' :
-                    projectData.projectType || projectData.tipo || 'commercial',
-        startDate: projectData.fecha_inicio || projectData.startDate || projectData.fechaInicio,
-        endDate: projectData.fecha_termino || projectData.endDate || projectData.fechaTermino
+        nombre: projectData.nombre,
+        descripcion: projectData.descripcion,
+        tipo: projectData.tipo,
+        fechaInicio: projectData.fecha_inicio,
+        fechaTermino: projectData.fecha_termino
       }
       
-      console.log('🔍 PROJECT CREATE - Payload to API:', payload)
+      console.log('🔍 PROJECT CREATE - Payload to API:', JSON.stringify(payload, null, 2))
       
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -82,7 +79,7 @@ export default function ProjectsPage() {
         alert('Proyecto creado exitosamente')
       } else {
         const error = await response.json()
-        console.error('🔍 PROJECT CREATE - API Error:', error)
+        console.error('🔍 PROJECT CREATE - API Error:', JSON.stringify(error, null, 2))
         alert(`Error al crear proyecto: ${error.error}`)
       }
     } catch (error) {

@@ -671,98 +671,137 @@ export function ProjectManagement({
 
   // Renderizar formulario de proyecto
   const renderFormularioProyecto = () => {
-    const seccionesFormulario = [
-      {
-        id: 'informacion-general',
-        title: 'Información General',
+    // Convert old format to FormTemplate config structure
+    const formConfig = {
+      id: 'project-form',
+      title: modoEdicion === 'crear' ? 'Crear Nuevo Proyecto' : 'Editar Proyecto',
+      description: modoEdicion === 'crear' 
+        ? 'Complete la información del nuevo proyecto' 
+        : `Editando: ${proyectoSeleccionado?.nombre}`,
+      type: 'custom' as const,
+      singleStep: {
         fields: [
-          { id: 'nombre', label: 'Nombre del Proyecto', type: 'text' as const, required: true },
-          { id: 'codigo', label: 'Código del Proyecto', type: 'text' as const, required: true },
-          { id: 'descripcion', label: 'Descripción', type: 'textarea' as const },
+          // Información General
+          { name: 'nombre', label: 'Nombre del Proyecto', type: 'text' as const, required: true },
+          { name: 'codigo', label: 'Código del Proyecto', type: 'text' as const, required: true },
+          { name: 'descripcion', label: 'Descripción', type: 'textarea' as const },
           { 
-            id: 'tipo', 
+            name: 'tipo', 
             label: 'Tipo de Proyecto', 
             type: 'select' as const, 
             required: true,
-            options: ['Residencial', 'Comercial', 'Industrial', 'Institucional', 'Infraestructura']
+            options: [
+              { value: 'residencial', label: 'Residencial' },
+              { value: 'comercial', label: 'Comercial' },
+              { value: 'industrial', label: 'Industrial' },
+              { value: 'institucional', label: 'Institucional' },
+              { value: 'infraestructura', label: 'Infraestructura' }
+            ]
           },
           { 
-            id: 'prioridad', 
+            name: 'prioridad', 
             label: 'Prioridad', 
             type: 'select' as const, 
             required: true,
-            options: ['Baja', 'Media', 'Alta', 'Crítica']
-          }
-        ]
-      },
-      {
-        id: 'ubicacion',
-        title: 'Ubicación y Terreno',
-        fields: [
-          { id: 'direccion', label: 'Dirección', type: 'text' as const, required: true },
-          { id: 'numero', label: 'Número', type: 'text' as const },
-          { id: 'comuna', label: 'Comuna', type: 'text' as const, required: true },
+            options: [
+              { value: 'baja', label: 'Baja' },
+              { value: 'media', label: 'Media' },
+              { value: 'alta', label: 'Alta' },
+              { value: 'critica', label: 'Crítica' }
+            ]
+          },
+          // Ubicación
+          { name: 'direccion', label: 'Dirección', type: 'text' as const, required: true },
+          { name: 'numero', label: 'Número', type: 'text' as const },
+          { name: 'comuna', label: 'Comuna', type: 'text' as const, required: true },
           { 
-            id: 'region', 
+            name: 'region', 
             label: 'Región', 
             type: 'select' as const, 
             required: true,
-            options: ['Metropolitana', 'Valparaíso', 'Biobío', 'Antofagasta']
+            options: [
+              { value: 'Metropolitana', label: 'Metropolitana' },
+              { value: 'Valparaíso', label: 'Valparaíso' },
+              { value: 'Biobío', label: 'Biobío' },
+              { value: 'Antofagasta', label: 'Antofagasta' }
+            ]
           },
-          { id: 'superficie_terreno', label: 'Superficie del Terreno (m²)', type: 'number' as const },
-          { id: 'superficie_construida', label: 'Superficie Construida (m²)', type: 'number' as const },
-          { id: 'coordenadas', label: 'Coordenadas GPS', type: 'location' as const }
-        ]
-      },
-      {
-        id: 'financiero',
-        title: 'Información Financiera',
-        fields: [
-          { id: 'presupuesto_total', label: 'Presupuesto Total', type: 'number' as const, required: true },
+          { name: 'superficie_terreno', label: 'Superficie del Terreno (m²)', type: 'number' as const },
+          { name: 'superficie_construida', label: 'Superficie Construida (m²)', type: 'number' as const },
+          { name: 'coordenadas', label: 'Coordenadas GPS', type: 'location' as const },
+          // Financiero
+          { name: 'presupuesto_total', label: 'Presupuesto Total', type: 'number' as const, required: true },
           { 
-            id: 'moneda', 
+            name: 'moneda', 
             label: 'Moneda', 
             type: 'select' as const, 
             required: true,
-            options: ['CLP', 'USD', 'UF'],
+            options: [
+              { value: 'CLP', label: 'CLP' },
+              { value: 'USD', label: 'USD' },
+              { value: 'UF', label: 'UF' }
+            ],
             defaultValue: 'CLP'
           },
-          { id: 'cliente', label: 'Cliente', type: 'text' as const },
-          { id: 'contrato', label: 'Número de Contrato', type: 'text' as const }
+          { name: 'cliente', label: 'Cliente', type: 'text' as const },
+          { name: 'contrato', label: 'Número de Contrato', type: 'text' as const },
+          // Cronograma
+          { name: 'fecha_inicio', label: 'Fecha de Inicio', type: 'date' as const, required: true },
+          { name: 'fecha_termino', label: 'Fecha de Término', type: 'date' as const, required: true },
+          // Equipo
+          { name: 'jefe_proyecto', label: 'Jefe de Proyecto', type: 'text' as const, required: true },
+          { name: 'jefe_terreno', label: 'Jefe de Terreno', type: 'text' as const, required: true },
+          { name: 'residente_obra', label: 'Residente de Obra', type: 'text' as const },
+          { name: 'ingeniero_construccion', label: 'Ingeniero de Construcción', type: 'text' as const },
+          { name: 'arquitecto', label: 'Arquitecto', type: 'text' as const }
+        ],
+        sections: [
+          {
+            id: 'informacion-general',
+            title: 'Información General',
+            fields: ['nombre', 'codigo', 'descripcion', 'tipo', 'prioridad'],
+            collapsible: true,
+            icon: 'info'
+          },
+          {
+            id: 'ubicacion',
+            title: 'Ubicación y Terreno',
+            fields: ['direccion', 'numero', 'comuna', 'region', 'superficie_terreno', 'superficie_construida', 'coordenadas'],
+            collapsible: true,
+            icon: 'map-pin'
+          },
+          {
+            id: 'financiero',
+            title: 'Información Financiera',
+            fields: ['presupuesto_total', 'moneda', 'cliente', 'contrato'],
+            collapsible: true,
+            icon: 'dollar-sign'
+          },
+          {
+            id: 'cronograma',
+            title: 'Cronograma',
+            fields: ['fecha_inicio', 'fecha_termino'],
+            collapsible: true,
+            icon: 'calendar'
+          },
+          {
+            id: 'equipo',
+            title: 'Equipo de Trabajo',
+            fields: ['jefe_proyecto', 'jefe_terreno', 'residente_obra', 'ingeniero_construccion', 'arquitecto'],
+            collapsible: true,
+            icon: 'users'
+          }
         ]
       },
-      {
-        id: 'cronograma',
-        title: 'Cronograma',
-        fields: [
-          { id: 'fecha_inicio', label: 'Fecha de Inicio', type: 'date' as const, required: true },
-          { id: 'fecha_termino', label: 'Fecha de Término', type: 'date' as const, required: true }
-        ]
-      },
-      {
-        id: 'equipo',
-        title: 'Equipo de Trabajo',
-        fields: [
-          { id: 'jefe_proyecto', label: 'Jefe de Proyecto', type: 'text' as const, required: true },
-          { id: 'jefe_terreno', label: 'Jefe de Terreno', type: 'text' as const, required: true },
-          { id: 'residente_obra', label: 'Residente de Obra', type: 'text' as const },
-          { id: 'ingeniero_construccion', label: 'Ingeniero de Construcción', type: 'text' as const },
-          { id: 'arquitecto', label: 'Arquitecto', type: 'text' as const }
-        ]
-      }
-    ]
+      showProgress: false,
+      allowDraft: true,
+      confirmOnExit: true
+    }
 
     return (
       <FormTemplate
-        mode="single"
-        title={modoEdicion === 'crear' ? 'Crear Nuevo Proyecto' : 'Editar Proyecto'}
-        subtitle={modoEdicion === 'crear' 
-          ? 'Complete la información del nuevo proyecto' 
-          : `Editando: ${proyectoSeleccionado?.nombre}`
-        }
-        sections={seccionesFormulario}
-        role={usuario.rol}
-        data={proyectoSeleccionado ? {
+        config={formConfig}
+        initialData={proyectoSeleccionado ? {
           nombre: proyectoSeleccionado.nombre,
           codigo: proyectoSeleccionado.codigo,
           descripcion: proyectoSeleccionado.descripcion,
@@ -787,10 +826,17 @@ export function ProjectManagement({
           arquitecto: proyectoSeleccionado.equipo.arquitecto
         } : {}}
         onSubmit={handleGuardarProyecto}
-        onCancel={() => {
-          setModoEdicion(null)
-          setProyectoSeleccionado(null)
-        }}
+        secondaryActions={[
+          {
+            id: 'cancel',
+            label: 'Cancelar',
+            variant: 'ghost' as const,
+            action: () => {
+              setModoEdicion(null)
+              setProyectoSeleccionado(null)
+            }
+          }
+        ]}
       />
     )
   }

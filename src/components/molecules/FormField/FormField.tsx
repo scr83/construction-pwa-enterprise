@@ -94,10 +94,16 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     ref
   ) => {
     const [internalValidation, setInternalValidation] = React.useState<'valid' | 'invalid' | 'warning' | 'neutral'>('neutral')
+    // ✅ FIX #2: Track if field has been touched to prevent premature validation
+    const [touched, setTouched] = React.useState(false)
     const inputId = React.useId()
     
     // Determine current validation state
+    // ✅ FIX #2: Only show validation errors after field has been touched
     const currentValidationState = validationState || (() => {
+      // Don't show validation errors until user has interacted with the field
+      if (!touched) return 'neutral'
+      
       if (errorMessage) return 'invalid'
       if (warningMessage) return 'warning'
       if (successMessage) return 'valid'
@@ -136,8 +142,18 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       }
     }
     
+    // ✅ FIX #2: Handle blur event to mark field as touched
+    const handleBlur = React.useCallback(() => {
+      setTouched(true)
+    }, [])
+    
     // Handle input validation
     const handleValidation = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      // ✅ FIX #2: Mark as touched on first change
+      if (!touched) {
+        setTouched(true)
+      }
+      
       const value = e.target.value
       let isValid = true
       
@@ -172,7 +188,7 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           onChange(e as any)
         }
       }
-    }, [required, inputProps.type, onChange, onValidation, name])
+    }, [required, inputProps.type, onChange, onValidation, name, touched])
     
     // Format error messages
     const formatErrorMessages = (errors: string | string[]) => {
@@ -271,6 +287,7 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           }
           aria-invalid={currentValidationState === 'invalid'}
           onChange={handleValidation}
+          onBlur={handleBlur}
           {...inputProps}
         />
         

@@ -78,6 +78,9 @@ export default function ProjectsPage() {
         alert('Proyecto creado exitosamente')
       } else {
         const error = await response.json()
+        console.error('🔍 API ERROR RESPONSE:', error)
+        console.error('🔍 PAYLOAD SENT:', payload)
+        console.error('🔍 RESPONSE STATUS:', response.status, response.statusText)
         alert(`Error al crear proyecto: ${error.error}`)
       }
     } catch (error) {

@@ -89,6 +89,8 @@ import {
   Loader2,
   Search,
   Filter,
+  Check,
+  DollarSign,
   
   // Navigation
   ArrowLeft,
@@ -205,6 +207,8 @@ const constructionIcons = {
   'loader-2': Loader2,
   'search': Search,
   'filter': Filter,
+  'check': Check,
+  'dollar-sign': DollarSign,
   
   // Navigation
   'arrow-left': ArrowLeft,

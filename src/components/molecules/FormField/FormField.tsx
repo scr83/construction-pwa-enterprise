@@ -157,19 +157,26 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       const value = e.target.value
       let isValid = true
       
-      // Basic validation logic
+      // FIXED: Proper validation logic
       if (required && !value.trim()) {
+        // Empty required field = INVALID
         isValid = false
         setInternalValidation('invalid')
       } else if (inputProps.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        // Invalid email format = INVALID
         isValid = false
         setInternalValidation('invalid')
       } else if (inputProps.type === 'number' && value && isNaN(Number(value))) {
+        // Invalid number = INVALID
         isValid = false
         setInternalValidation('invalid')
-      } else if (value) {
+      } else if (value.trim()) {
+        // HAS VALUE and passed validation = VALID (GREEN)
+        isValid = true
         setInternalValidation('valid')
       } else {
+        // Empty optional field = NEUTRAL (WHITE)
+        isValid = true
         setInternalValidation('neutral')
       }
       

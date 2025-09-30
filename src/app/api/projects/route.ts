@@ -10,18 +10,46 @@ function mapTipoToProjectType(tipo: string): 'residential' | 'commercial' | 'ind
     'residencial': 'residential' as const,
     'comercial': 'commercial' as const,
     'industrial': 'industrial' as const,
+    'institucional': 'commercial' as const, // Map institucional to commercial
     'infraestructura': 'infrastructure' as const
   }
   return mapping[tipo] || 'commercial'
 }
 
-// Schema for creating a new project (Spanish fields)
+// Schema for creating a new project (Spanish fields) - EXPANDED to accept all form fields
 const createProjectSchema = z.object({
+  // Información General
   nombre: z.string().min(1, 'Nombre del proyecto es requerido'),
+  codigo: z.string().optional(),
   descripcion: z.string().optional(),
-  tipo: z.enum(['residencial', 'comercial', 'industrial', 'infraestructura']).optional().default('comercial'),
+  tipo: z.enum(['residencial', 'comercial', 'industrial', 'institucional', 'infraestructura']).optional().default('comercial'),
+  prioridad: z.enum(['baja', 'media', 'alta', 'critica']).optional().default('media'),
+  
+  // Ubicación
+  direccion: z.string().optional(),
+  numero: z.string().optional(),
+  comuna: z.string().optional(),
+  region: z.string().optional(),
+  superficieTerreno: z.number().or(z.string().transform(Number)).optional(),
+  superficieConstruida: z.number().or(z.string().transform(Number)).optional(),
+  coordenadas: z.any().optional(),
+  
+  // Financiero
+  presupuestoTotal: z.number().or(z.string().transform(Number)).optional(),
+  moneda: z.enum(['CLP', 'USD', 'UF']).optional().default('CLP'),
+  cliente: z.string().optional(),
+  contrato: z.string().optional(),
+  
+  // Cronograma
   fechaInicio: z.string().optional(),
-  fechaTermino: z.string().optional()
+  fechaTermino: z.string().optional(),
+  
+  // Equipo
+  jefeProyecto: z.string().optional(),
+  jefeTerreno: z.string().optional(),
+  residenteObra: z.string().optional(),
+  ingenieroConstruccion: z.string().optional(),
+  arquitecto: z.string().optional()
 })
 
 // GET /api/projects - Get all projects

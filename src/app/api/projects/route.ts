@@ -147,10 +147,10 @@ export async function GET() {
       // Equipo with exact structure
       equipo: {
         jefeProyecto: session.user.name || 'Sin asignar',
-        jefeTerreno: 'Carlos Mendoza',
-        residenteObra: 'Miguel Torres',
-        ingenieroConstruccion: 'Ana Rodríguez',
-        arquitecto: 'Ricardo Valenzuela',
+        jefeTerreno: 'Sin asignar',
+        residenteObra: 'Sin asignar',
+        ingenieroConstruccion: 'Sin asignar',
+        arquitecto: 'Sin asignar',
         totalTrabajadores: Math.floor(Math.random() * 30) + 15,
         subcontratistas: ['Hormigones del Sur S.A.', 'Instalaciones Técnicas Ltda.']
       },

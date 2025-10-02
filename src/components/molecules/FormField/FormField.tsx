@@ -148,13 +148,21 @@ const FormField = React.forwardRef<HTMLInputElement & HTMLSelectElement, FormFie
     const [touched, setTouched] = React.useState(false)
     const inputId = React.useId()
     
+    // ✅ FIX: Helper function to check if there are actual errors
+    const hasActualErrors = React.useMemo(() => {
+      if (!errorMessage) return false
+      if (Array.isArray(errorMessage)) return errorMessage.length > 0
+      return typeof errorMessage === 'string' && errorMessage.trim().length > 0
+    }, [errorMessage])
+    
     // Determine current validation state
     // ✅ FIX #2: Only show validation errors after field has been touched
     const currentValidationState = validationState || (() => {
       // Don't show validation errors until user has interacted with the field
       if (!touched) return 'neutral'
       
-      if (errorMessage) return 'invalid'
+      // ✅ FIX: Use helper to check for actual errors (empty arrays = no errors)
+      if (hasActualErrors) return 'invalid'
       if (warningMessage) return 'warning'
       if (successMessage) return 'valid'
       return internalValidation
@@ -341,7 +349,7 @@ const FormField = React.forwardRef<HTMLInputElement & HTMLSelectElement, FormFie
           aria-describedby={
             [
               helperText && `${inputId}-helper`,
-              errorMessage && `${inputId}-error`,
+              hasActualErrors && `${inputId}-error`,
               successMessage && `${inputId}-success`,
               warningMessage && `${inputId}-warning`,
             ].filter(Boolean).join(' ') || undefined
@@ -415,7 +423,7 @@ const FormField = React.forwardRef<HTMLInputElement & HTMLSelectElement, FormFie
           aria-describedby={
             [
               helperText && `${inputId}-helper`,
-              errorMessage && `${inputId}-error`,
+              hasActualErrors && `${inputId}-error`,
               successMessage && `${inputId}-success`,
               warningMessage && `${inputId}-warning`,
             ].filter(Boolean).join(' ') || undefined
@@ -445,7 +453,7 @@ const FormField = React.forwardRef<HTMLInputElement & HTMLSelectElement, FormFie
     const messageElement = (
       <div className="space-y-1">
         {/* Helper text */}
-        {helperText && !errorMessage && !warningMessage && (
+        {helperText && !hasActualErrors && !warningMessage && (
           <Typography
             id={`${inputId}-helper`}
             variant="body-small"
@@ -456,14 +464,14 @@ const FormField = React.forwardRef<HTMLInputElement & HTMLSelectElement, FormFie
         )}
         
         {/* Error messages */}
-        {errorMessage && (
+        {hasActualErrors && (
           <div id={`${inputId}-error`} className="space-y-1">
             {formatErrorMessages(errorMessage)}
           </div>
         )}
         
         {/* Warning message */}
-        {warningMessage && !errorMessage && (
+        {warningMessage && !hasActualErrors && (
           <div id={`${inputId}-warning`} className="flex items-center gap-1">
             <Icon name="alert-triangle" size="xs" variant="warning" />
             <Typography variant="body-small" color="warning">
@@ -473,7 +481,7 @@ const FormField = React.forwardRef<HTMLInputElement & HTMLSelectElement, FormFie
         )}
         
         {/* Success message */}
-        {successMessage && !errorMessage && !warningMessage && (
+        {successMessage && !hasActualErrors && !warningMessage && (
           <div id={`${inputId}-success`} className="flex items-center gap-1">
             <Icon name="check-circle" size="xs" variant="success" />
             <Typography variant="body-small" color="success">

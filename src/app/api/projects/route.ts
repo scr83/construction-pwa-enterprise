@@ -137,11 +137,11 @@ export async function GET() {
       
       // Avance
       avance: {
-        fisico: Math.floor(Math.random() * 40) + 40,
-        financiero: Math.floor(Math.random() * 30) + 50,
-        cronograma: Math.floor(Math.random() * 20) + 75,
-        partidasCompletadas: Math.floor(Math.random() * 15) + 5,
-        partidasTotales: Math.floor(Math.random() * 10) + 20
+        fisico: 0, // Start at 0% for new projects
+        financiero: 0, // Start at 0% for new projects
+        cronograma: 0, // Start at 0% for new projects
+        partidasCompletadas: 0, // No partidas completed initially
+        partidasTotales: Math.floor(Math.random() * 10) + 20 // Keep random total partidas for variety
       },
       
       // Equipo with exact structure

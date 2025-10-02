@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
+import { FormPersistenceManager, setupBeforeUnloadWarning } from '@/lib/form-persistence'
 
 // Import organisms
 import { NavigationBar } from '@/components/organisms/NavigationBar'
@@ -122,6 +123,11 @@ export interface FormConfig {
   allowDraft?: boolean
   requiresApproval?: boolean
   enableOfflineMode?: boolean
+  
+  // Form persistence
+  enablePersistence?: boolean
+  persistenceDebounceDelay?: number // milliseconds
+  showUnsavedWarning?: boolean
   
   // Validation
   validation?: 'client' | 'server' | 'both'
@@ -315,10 +321,67 @@ const FormTemplate = React.forwardRef<HTMLDivElement, FormTemplateProps>(
     const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set())
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false)
     const autoSaveRef = React.useRef<NodeJS.Timeout>()
+    
+    // Form persistence
+    const persistenceManagerRef = React.useRef<FormPersistenceManager | null>(null)
+    const [persistenceStatus, setPersistenceStatus] = React.useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+    const [lastPersistenceTime, setLastPersistenceTime] = React.useState<Date | null>(null)
 
-    // Auto-save functionality
+    // Initialize form persistence
     React.useEffect(() => {
-      if (!config?.autoSave || !config.autoSaveInterval || !formState.isDirty) return
+      if (!config?.enablePersistence) return
+
+      // Initialize persistence manager
+      persistenceManagerRef.current = new FormPersistenceManager({
+        formId: config.id,
+        userId: currentUser?.id,
+        autoSaveInterval: config.autoSaveInterval || 30,
+        debounceDelay: config.persistenceDebounceDelay || 500,
+        enableDebugLogging: process.env.NODE_ENV === 'development'
+      })
+
+      // Load existing data if available
+      const savedData = persistenceManagerRef.current.loadFormData()
+      if (savedData && Object.keys(savedData).length > 0) {
+        setFormData(prevData => ({ ...prevData, ...savedData }))
+        setFormState(prev => ({ ...prev, isDirty: true }))
+        setLastPersistenceTime(new Date())
+      }
+
+      // Setup auto-save
+      if (config.autoSave) {
+        persistenceManagerRef.current.startAutoSave(
+          () => formData,
+          (success) => {
+            setPersistenceStatus(success ? 'saved' : 'error')
+            if (success) {
+              setLastPersistenceTime(new Date())
+              setFormState(prev => ({ ...prev, lastAutoSave: new Date() }))
+            }
+          }
+        )
+      }
+
+      return () => {
+        persistenceManagerRef.current?.cleanup()
+      }
+    }, [config?.enablePersistence, config?.id, currentUser?.id, config?.autoSave, config?.autoSaveInterval])
+
+    // Setup beforeunload warning
+    React.useEffect(() => {
+      if (!config?.showUnsavedWarning) return
+
+      const cleanup = setupBeforeUnloadWarning(
+        formState.isDirty,
+        '¿Estás seguro de que quieres salir? Tienes cambios sin guardar que se perderán.'
+      )
+
+      return cleanup
+    }, [formState.isDirty, config?.showUnsavedWarning])
+
+    // Auto-save functionality (legacy - for backward compatibility)
+    React.useEffect(() => {
+      if (!config?.autoSave || !config.autoSaveInterval || !formState.isDirty || config?.enablePersistence) return
 
       if (autoSaveRef.current) {
         clearTimeout(autoSaveRef.current)
@@ -334,7 +397,7 @@ const FormTemplate = React.forwardRef<HTMLDivElement, FormTemplateProps>(
           clearTimeout(autoSaveRef.current)
         }
       }
-    }, [formData, formState.isDirty, config?.autoSave, config?.autoSaveInterval, onAutoSave])
+    }, [formData, formState.isDirty, config?.autoSave, config?.autoSaveInterval, config?.enablePersistence, onAutoSave])
 
     // Handle field change
     const handleFieldChange = (field: string, value: any) => {
@@ -345,6 +408,20 @@ const FormTemplate = React.forwardRef<HTMLDivElement, FormTemplateProps>(
 
       // Validate field
       validateField(field, value, newFormData)
+
+      // Trigger debounced persistence save
+      if (config?.enablePersistence && persistenceManagerRef.current) {
+        setPersistenceStatus('saving')
+        persistenceManagerRef.current.debouncedSave(
+          newFormData,
+          (success) => {
+            setPersistenceStatus(success ? 'saved' : 'error')
+            if (success) {
+              setLastPersistenceTime(new Date())
+            }
+          }
+        )
+      }
     }
 
     // Field validation
@@ -453,6 +530,15 @@ const FormTemplate = React.forwardRef<HTMLDivElement, FormTemplateProps>(
       onStepChange?.(prevStep, 'prev')
     }
 
+    // Clear persistence data
+    const clearPersistenceData = () => {
+      if (persistenceManagerRef.current) {
+        persistenceManagerRef.current.clearFormData()
+        setPersistenceStatus('idle')
+        setLastPersistenceTime(null)
+      }
+    }
+
     // Form submission
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
@@ -480,6 +566,11 @@ const FormTemplate = React.forwardRef<HTMLDivElement, FormTemplateProps>(
       try {
         await onSubmit?.(formData)
         setFormState(prev => ({ ...prev, isDirty: false }))
+        
+        // Clear persistence data on successful submission
+        if (config?.enablePersistence) {
+          clearPersistenceData()
+        }
       } catch (error) {
         console.error('Form submission error:', error)
       } finally {
@@ -763,7 +854,40 @@ const FormTemplate = React.forwardRef<HTMLDivElement, FormTemplateProps>(
             
             {/* Form actions */}
             <div className="flex items-center gap-2">
-              {config?.autoSave && formState.lastAutoSave && (
+              {/* Persistence status */}
+              {config?.enablePersistence && (
+                <div className="flex items-center gap-2">
+                  {persistenceStatus === 'saving' && (
+                    <div className="flex items-center gap-1 text-blue-600">
+                      <Loading size="xs" />
+                      <Typography variant="caption">
+                        Guardando...
+                      </Typography>
+                    </div>
+                  )}
+                  {persistenceStatus === 'saved' && lastPersistenceTime && (
+                    <div className="flex items-center gap-1 text-green-600">
+                      <Icon name="check" size="xs" />
+                      <Typography variant="caption">
+                        <span suppressHydrationWarning>
+                          Guardado: {lastPersistenceTime.toLocaleTimeString('es-CL', { hour12: false })}
+                        </span>
+                      </Typography>
+                    </div>
+                  )}
+                  {persistenceStatus === 'error' && (
+                    <div className="flex items-center gap-1 text-red-600">
+                      <Icon name="alert-circle" size="xs" />
+                      <Typography variant="caption">
+                        Error al guardar
+                      </Typography>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Legacy auto-save status */}
+              {!config?.enablePersistence && config?.autoSave && formState.lastAutoSave && (
                 <Typography variant="caption" color="muted">
                   <span suppressHydrationWarning>
                     Guardado: {formState.lastAutoSave.toLocaleTimeString('es-CL', { hour12: false })}
@@ -780,6 +904,18 @@ const FormTemplate = React.forwardRef<HTMLDivElement, FormTemplateProps>(
                   leftIcon={<Icon name="save" size="xs" />}
                 >
                   Guardar Borrador
+                </Button>
+              )}
+
+              {/* Clear persistence button (development only) */}
+              {config?.enablePersistence && process.env.NODE_ENV === 'development' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearPersistenceData}
+                  leftIcon={<Icon name="trash-2" size="xs" />}
+                >
+                  Limpiar
                 </Button>
               )}
             </div>

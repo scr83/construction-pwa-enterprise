@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 // Value mapping functions
 function mapTipoToProjectType(tipo: string): 'residential' | 'commercial' | 'industrial' | 'infrastructure' {
-  const mapping = {
+  const mapping: Record<string, 'residential' | 'commercial' | 'industrial' | 'infrastructure'> = {
     'residencial': 'residential' as const,
     'comercial': 'commercial' as const,
     'industrial': 'industrial' as const,
@@ -53,7 +53,7 @@ const createProjectSchema = z.object({
 })
 
 // GET /api/projects - Get all projects
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -244,7 +244,7 @@ export async function POST(req: NextRequest) {
     const project = await prisma.project.create({
       data: {
         name: validatedData.nombre,
-        description: validatedData.descripcion,
+        description: validatedData.descripcion || null,
         projectType: mapTipoToProjectType(validatedData.tipo),
         status: 'PLANNING',
         startDate: validatedData.fechaInicio ? new Date(validatedData.fechaInicio) : new Date(),

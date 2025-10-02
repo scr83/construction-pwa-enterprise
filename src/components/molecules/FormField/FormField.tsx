@@ -25,6 +25,44 @@ const formFieldVariants = cva('w-full space-y-2', {
   },
 })
 
+// Select variants matching Input styling exactly
+const selectVariants = cva(
+  'flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  {
+    variants: {
+      size: {
+        sm: 'h-11 px-3 py-2 text-sm',
+        default: 'h-11 px-4 py-2 text-base', // Optimized for mobile touch (44px minimum)
+        lg: 'h-12 px-4 py-3 text-lg',
+        xl: 'h-14 px-6 py-4 text-xl',
+      },
+      variant: {
+        default: 'border-input',
+        success: 'border-success-300 bg-success-50 focus-visible:ring-success-500',
+        error: 'border-danger-300 bg-danger-50 focus-visible:ring-danger-500',
+        warning: 'border-warning-300 bg-warning-50 focus-visible:ring-warning-500',
+      },
+      contrast: {
+        default: '',
+        high: 'bg-white border-2 border-neutral-400 text-neutral-900 shadow-sm',
+      },
+    },
+    defaultVariants: {
+      size: 'default',
+      variant: 'default',
+      contrast: 'default',
+    },
+  }
+)
+
+// Option type for select elements
+export interface SelectOption {
+  value: string
+  label: string
+  disabled?: boolean
+  category?: string // For grouping options
+}
+
 export interface FormFieldProps
   extends Omit<InputProps, 'label' | 'helperText' | 'errorMessage' | 'successMessage' | 'onChange'>,
     VariantProps<typeof formFieldVariants> {
@@ -60,11 +98,19 @@ export interface FormFieldProps
   name: string
   onValidation?: (isValid: boolean, fieldName: string) => void
   
-  // Support both event and value onChange patterns
-  onChange?: ((value: string) => void) | ((event: React.ChangeEvent<HTMLInputElement>) => void)
+  // Select-specific props
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'select' // Extend input types with select
+  options?: SelectOption[] // Options for select type
+  placeholder?: string // Custom placeholder for select (defaults to Spanish)
+  emptyOption?: string | boolean // Custom empty option text or false to disable
+  
+  // Support both event and value onChange patterns (now includes select)
+  onChange?: ((value: string) => void) | 
+            ((event: React.ChangeEvent<HTMLInputElement>) => void) |
+            ((event: React.ChangeEvent<HTMLSelectElement>) => void)
 }
 
-const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
+const FormField = React.forwardRef<HTMLInputElement & HTMLSelectElement, FormFieldProps>(
   (
     {
       className,
@@ -89,6 +135,10 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       name,
       onValidation,
       onChange,
+      type = 'text',
+      options = [],
+      placeholder,
+      emptyOption = 'Seleccionar una opción...',
       ...inputProps
     },
     ref
@@ -147,8 +197,8 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       setTouched(true)
     }, [])
     
-    // Handle input validation
-    const handleValidation = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handle input and select validation
+    const handleValidation = React.useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       // ✅ FIX #2: Mark as touched on first change
       if (!touched) {
         setTouched(true)
@@ -162,11 +212,11 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
         // Empty required field = INVALID
         isValid = false
         setInternalValidation('invalid')
-      } else if (inputProps.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      } else if (type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
         // Invalid email format = INVALID
         isValid = false
         setInternalValidation('invalid')
-      } else if (inputProps.type === 'number' && value && isNaN(Number(value))) {
+      } else if (type === 'number' && value && isNaN(Number(value))) {
         // Invalid number = INVALID
         isValid = false
         setInternalValidation('invalid')
@@ -195,7 +245,7 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           onChange(e as any)
         }
       }
-    }, [required, inputProps.type, onChange, onValidation, name, touched])
+    }, [required, type, onChange, onValidation, name, touched])
     
     // Format error messages
     const formatErrorMessages = (errors: string | string[]) => {
@@ -261,7 +311,84 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       </div>
     )
     
-    const inputElement = (
+    const inputElement = type === 'select' ? (
+      <div className="relative">
+        {prefix && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-500 z-10">
+            {prefix}
+          </div>
+        )}
+        
+        <select
+          id={inputId}
+          ref={ref as React.Ref<HTMLSelectElement>}
+          name={name}
+          required={required}
+          className={cn(
+            selectVariants({
+              size: inputProps.size || 'default',
+              variant: 
+                currentValidationState === 'invalid' ? 'error' :
+                currentValidationState === 'warning' ? 'warning' :
+                currentValidationState === 'valid' ? 'success' :
+                'default',
+              contrast: inputProps.weatherResistant ? 'high' : 'default'
+            }),
+            prefix && 'pl-10',
+            suffix && 'pr-10',
+            className
+          )}
+          aria-describedby={
+            [
+              helperText && `${inputId}-helper`,
+              errorMessage && `${inputId}-error`,
+              successMessage && `${inputId}-success`,
+              warningMessage && `${inputId}-warning`,
+            ].filter(Boolean).join(' ') || undefined
+          }
+          aria-invalid={currentValidationState === 'invalid'}
+          onChange={handleValidation}
+          onBlur={handleBlur}
+          disabled={inputProps.disabled}
+        >
+          {/* Empty option for placeholder */}
+          {emptyOption !== false && (
+            <option value="" disabled={required}>
+              {typeof emptyOption === 'string' ? emptyOption : 'Seleccionar una opción...'}
+            </option>
+          )}
+          
+          {/* Render options */}
+          {options.map((option) => (
+            <option
+              key={option.value}
+              value={option.value}
+              disabled={option.disabled}
+            >
+              {option.label}
+            </option>
+          ))}
+        </select>
+        
+        {/* Dropdown arrow icon */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <Icon name="chevron-down" size="xs" variant="muted" />
+        </div>
+        
+        {suffix && (
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 text-secondary-500">
+            {suffix}
+          </div>
+        )}
+        
+        {/* Validation icon */}
+        {!suffix && currentValidationState !== 'neutral' && (
+          <div className="absolute right-8 top-1/2 -translate-y-1/2">
+            {getValidationIcon()}
+          </div>
+        )}
+      </div>
+    ) : (
       <div className="relative">
         {prefix && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-500">
@@ -271,8 +398,9 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
         
         <Input
           id={inputId}
-          ref={ref}
+          ref={ref as React.Ref<HTMLInputElement>}
           name={name}
+          type={type}
           required={required}
           variant={
             currentValidationState === 'invalid' ? 'error' :
@@ -295,6 +423,7 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           aria-invalid={currentValidationState === 'invalid'}
           onChange={handleValidation}
           onBlur={handleBlur}
+          placeholder={placeholder}
           {...inputProps}
         />
         
@@ -395,4 +524,5 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
 )
 FormField.displayName = 'FormField'
 
-export { FormField, formFieldVariants }
+export { FormField, formFieldVariants, selectVariants }
+export type { SelectOption }

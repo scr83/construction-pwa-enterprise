@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, TaskStatus, TaskPriority, TaskCategory } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -362,6 +362,20 @@ async function main() {
       dueDate: new Date('2025-10-14'),
       startDate: new Date('2025-10-13'),
       status: 'IN_PROGRESS'
+    },
+    {
+      title: 'Preparación del Terreno - Fase 1',
+      description: 'Excavación y movimiento de tierra para preparación de fundaciones. Incluye nivelación y compactación.',
+      priority: 'HIGH',
+      category: 'STRUCTURE',
+      building: 'Edificio A',
+      unit: 'Fundaciones',
+      partida: 'Excavaciones y movimiento tierra',
+      estimatedHours: 24,
+      materials: ['Combustible maquinaria', 'Topografía', 'Compactador', 'Material de relleno'],
+      prerequisites: ['Permiso municipal', 'Trazado aprobado'],
+      dueDate: new Date('2025-10-20'),
+      startDate: new Date('2025-10-18')
     }
   ]
 
@@ -382,9 +396,9 @@ async function main() {
         assigneeId: users[assigneeIndex].id,
         createdById: users[creatorIndex].id,
         projectId: projectId,
-        status: taskData.status || 'PENDING',
-        priority: taskData.priority as any,
-        category: taskData.category as any,
+        status: (taskData.status as TaskStatus) || TaskStatus.PENDING,
+        priority: taskData.priority as TaskPriority,
+        category: taskData.category as TaskCategory,
         dueDate: taskData.dueDate,
         startDate: taskData.startDate,
         completedAt: taskData.completedAt,

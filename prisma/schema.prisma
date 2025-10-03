@@ -49,7 +49,7 @@ model User {
   emailVerified DateTime? @map("email_verified")
   image         String?
   password      String?   // For credentials authentication
-  role          String    @default("SITE_MANAGER")
+  role          UserRole  @default(SITE_MANAGER)
   company       String?   // Company name
   phone         String?   // Phone number
   isActive      Boolean   @default(true)
@@ -143,17 +143,54 @@ model Unit {
   @@map("units")
 }
 
+// Phase 1: Partida Model for Chilean Construction Activities
+model Partida {
+  id           String @id @default(cuid())
+  name         String
+  category     String
+  sequence     Int
+  budgetWeight Float? @map("budget_weight")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  constructionActivities ConstructionActivity[]
+  
+  @@map("partidas")
+}
+
 // Construction Activity and Work Models
 model ConstructionActivity {
   id          String   @id @default(cuid())
   projectId   String   @map("project_id")
+  partidaId   String   @map("partida_id")
   name        String   // Partida name
   description String?
   sequence    Int      // Order in construction process
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Phase 1: Chilean Construction Workflow Fields
+  kitMaterialInicial       Boolean @default(false) @map("kit_material_inicial")
+  kitMaterialAjustado      Boolean @default(false) @map("kit_material_ajustado")
+  faenaContratada          Boolean @default(false) @map("faena_contratada")
+  subcontratoAsignado      Boolean @default(false) @map("subcontrato_asignado")
+  kitInicialCotizado       Boolean @default(false) @map("kit_inicial_cotizado")
+  solpedInicialEmitida     Boolean @default(false) @map("solped_inicial_emitida")
+  kitComprado              Boolean @default(false) @map("kit_comprado")
+  kitDisponibleBodega      Boolean @default(false) @map("kit_disponible_bodega")
+  kitEntregadoTerreno      Boolean @default(false) @map("kit_entregado_terreno")
+  faenaEjecutada           Boolean @default(false) @map("faena_ejecutada")
+  entregadoCalidad         Boolean @default(false) @map("entregado_calidad")
+  tratoPagado              Boolean @default(false) @map("trato_pagado")
+  pagoCursado              Boolean @default(false) @map("pago_cursado")
+  fechaEjecucion           DateTime? @map("fecha_ejecucion")
+  
+  // Phase 1: Weekly tracking fields
+  completedThisWeek        Boolean @default(false) @map("completed_this_week")
+  weekNumber               Int? @map("week_number")
 
   project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  partida     Partida      @relation(fields: [partidaId], references: [id], onDelete: Cascade)
   workRecords WorkRecord[]
 
   @@map("construction_activities")
@@ -164,7 +201,7 @@ model WorkRecord {
   unitId                String   @map("unit_id")
   constructionActivityId String  @map("construction_activity_id")
   userId                String   @map("user_id") // Who recorded the work
-  status                String @default("ASSIGNED")
+  status                WorkStatus @default(ASSIGNED)
   executionDate         DateTime? @map("execution_date")
   quantity              Decimal?
   notes                 String?
@@ -193,7 +230,7 @@ model MaterialRecord {
   materialName String   @map("material_name")
   quantity     Decimal
   unit         String   // m2, m3, kg, units, etc.
-  status       String @default("PLANNED")
+  status       MaterialStatus @default(PLANNED)
   cost         Decimal?
   supplier     String?
   deliveryDate DateTime? @map("delivery_date")
@@ -212,7 +249,7 @@ model QualityRecord {
   id             String   @id @default(cuid())
   workRecordId   String   @map("work_record_id")
   userId         String   @map("user_id") // Quality inspector
-  status         String @default("PENDING")
+  status         QualityStatus @default(PENDING)
   inspectionDate DateTime? @map("inspection_date")
   notes          String?
   checklist      String?  // Flexible checklist structure as JSON string
@@ -235,7 +272,7 @@ model PaymentRecord {
   userId       String   @map("user_id") // Who authorized payment
   amount       Decimal
   paymentDate  DateTime? @map("payment_date")
-  status       String @default("PENDING")
+  status       PaymentStatus @default(PENDING)
   notes        String?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -419,4 +456,55 @@ enum TaskCategory {
   INSTALLATIONS    // instalaciones
   FINISHES         // acabados
   TECHNICAL_OFFICE // oficina_tecnica
+}
+
+// Additional enums required by the application
+enum UserRole {
+  EXECUTIVE
+  SITE_MANAGER
+  WAREHOUSE
+  TECHNICAL_OFFICE
+  QUALITY_CONTROL
+  ADMIN
+  SUPERVISOR
+  QUALITY_INSPECTOR
+  WORKER
+}
+
+enum WorkStatus {
+  ASSIGNED
+  MATERIALS_PLANNED
+  MATERIALS_PURCHASED
+  MATERIALS_AVAILABLE
+  MATERIALS_DELIVERED
+  EXECUTED
+  QUALITY_SUBMITTED
+  QUALITY_RECEIVED
+  QUALITY_APPROVED
+  COMPLETED
+  PAID
+}
+
+enum MaterialStatus {
+  PLANNED
+  REQUESTED
+  PURCHASED
+  IN_WAREHOUSE
+  DELIVERED
+  INSTALLED
+}
+
+enum QualityStatus {
+  PENDING
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+  CORRECTIVE_ACTION_REQUIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
 }

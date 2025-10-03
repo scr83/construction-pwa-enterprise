@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useState, useEffect, useMemo } from 'react'
 import { teamsApi, type DashboardKPIs, type Team } from '@/lib/api/teams'
 import { tasksApi, type TaskMetrics } from '@/lib/api/tasks'
+import { projectsApi, type Project } from '@/lib/api/projects'
 
 // Real KPI calculations helper functions
 const calculateKPIs = {
@@ -178,24 +179,77 @@ const generateProjectData = () => [
   }
 ]
 
-// Calculate dynamic KPIs based on project data
+// Calculate dynamic KPIs based on project data - handles both real and mock data
 const calculateProjectKPIs = (projects: any[]) => {
+  if (!projects || projects.length === 0) {
+    return {
+      activeProjects: 0,
+      totalProjects: 0,
+      totalBudget: 0,
+      totalExecuted: 0,
+      budgetUtilization: 0,
+      avgProgress: 0,
+      totalWorkers: 0,
+      totalInspections: 0,
+      totalNonCompliance: 0,
+      avgCompliance: 0,
+      criticalStock: 0,
+      onTimeProjects: 0
+    }
+  }
+
   const activeProjects = projects.filter(p => !['completado', 'suspendido', 'cancelado'].includes(p.estado))
-  const totalBudget = projects.reduce((sum, p) => sum + p.presupuestoTotal, 0)
-  const totalExecuted = projects.reduce((sum, p) => sum + p.presupuestoEjecutado, 0)
-  const avgProgress = projects.reduce((sum, p) => sum + p.avanceFisico, 0) / projects.length
-  const totalWorkers = projects.reduce((sum, p) => sum + p.equipo.totalTrabajadores, 0)
-  const totalInspections = projects.reduce((sum, p) => sum + p.calidad.inspeccionesPendientes, 0)
-  const totalNonCompliance = projects.reduce((sum, p) => sum + p.calidad.noConformidades, 0)
-  const avgCompliance = projects.reduce((sum, p) => sum + p.calidad.cumplimientoNormativa, 0) / projects.length
-  const criticalStock = projects.reduce((sum, p) => sum + p.materiales.stockCritico, 0)
+  
+  // Handle both API structure (financiero.presupuestoTotal) and mock structure (presupuestoTotal)
+  const totalBudget = projects.reduce((sum, p) => {
+    const budget = p.financiero?.presupuestoTotal || p.presupuestoTotal || 0
+    return sum + budget
+  }, 0)
+  
+  const totalExecuted = projects.reduce((sum, p) => {
+    const executed = p.financiero?.presupuestoEjecutado || p.presupuestoEjecutado || 0
+    return sum + executed
+  }, 0)
+  
+  // Handle both API structure (avance.fisico) and mock structure (avanceFisico)
+  const avgProgress = projects.length > 0 ? 
+    projects.reduce((sum, p) => {
+      const progress = p.avance?.fisico || p.avanceFisico || 0
+      return sum + progress
+    }, 0) / projects.length : 0
+  
+  const totalWorkers = projects.reduce((sum, p) => {
+    const workers = p.equipo?.totalTrabajadores || 0
+    return sum + workers
+  }, 0)
+  
+  const totalInspections = projects.reduce((sum, p) => {
+    const inspections = p.calidad?.inspeccionesPendientes || 0
+    return sum + inspections
+  }, 0)
+  
+  const totalNonCompliance = projects.reduce((sum, p) => {
+    const nonCompliance = p.calidad?.noConformidades || 0
+    return sum + nonCompliance
+  }, 0)
+  
+  const avgCompliance = projects.length > 0 ?
+    projects.reduce((sum, p) => {
+      const compliance = p.calidad?.cumplimientoNormativa || 0
+      return sum + compliance
+    }, 0) / projects.length : 0
+  
+  const criticalStock = projects.reduce((sum, p) => {
+    const stock = p.materiales?.stockCritico || 0
+    return sum + stock
+  }, 0)
   
   return {
     activeProjects: activeProjects.length,
     totalProjects: projects.length,
     totalBudget,
     totalExecuted,
-    budgetUtilization: (totalExecuted / totalBudget) * 100,
+    budgetUtilization: totalBudget > 0 ? (totalExecuted / totalBudget) * 100 : 0,
     avgProgress: Math.round(avgProgress),
     totalWorkers,
     totalInspections,
@@ -203,11 +257,23 @@ const calculateProjectKPIs = (projects: any[]) => {
     avgCompliance: Math.round(avgCompliance),
     criticalStock,
     onTimeProjects: projects.filter(p => {
-      const today = new Date()
-      const endDate = new Date(p.fechaTermino)
-      const progress = p.avanceFisico
-      const timeElapsed = (today.getTime() - new Date(p.fechaInicio).getTime()) / (endDate.getTime() - new Date(p.fechaInicio).getTime())
-      return progress >= (timeElapsed * 100)
+      try {
+        const today = new Date()
+        // Handle both API structure and mock structure for dates
+        const endDate = new Date(p.fechas?.terminoProgramado || p.fechaTermino || new Date())
+        const startDate = new Date(p.fechas?.inicio || p.fechaInicio || new Date())
+        const progress = p.avance?.fisico || p.avanceFisico || 0
+        
+        const totalDuration = endDate.getTime() - startDate.getTime()
+        if (totalDuration <= 0) return false
+        
+        const timeElapsed = today.getTime() - startDate.getTime()
+        const expectedProgress = (timeElapsed / totalDuration) * 100
+        
+        return progress >= expectedProgress
+      } catch (error) {
+        return false
+      }
     }).length
   }
 }
@@ -252,6 +318,11 @@ export default function DashboardPage() {
   const [taskMetrics, setTaskMetrics] = useState<TaskMetrics | null>(null)
   const [taskMetricsLoading, setTaskMetricsLoading] = useState(true)
   const [taskMetricsError, setTaskMetricsError] = useState<string | null>(null)
+  
+  // Projects state
+  const [projects, setProjects] = useState<Project[]>([])
+  const [projectsLoading, setProjectsLoading] = useState(true)
+  const [projectsError, setProjectsError] = useState<string | null>(null)
   
   // Generate project data
   const mockProyectos = useMemo(() => generateProjectData(), [])
@@ -338,9 +409,38 @@ export default function DashboardPage() {
 
     loadTaskMetrics()
   }, [session])
+  
+  // Load real projects data
+  useEffect(() => {
+    const loadProjectsData = async () => {
+      if (!session?.user) return
+      
+      try {
+        setProjectsError(null)
+        const response = await projectsApi.getProjects()
+        
+        if (response.success && response.data) {
+          setProjects(response.data.projects)
+        } else {
+          setProjectsError(response.error || 'Error cargando proyectos')
+        }
+      } catch (error) {
+        setProjectsError('Error de conexión')
+      } finally {
+        setProjectsLoading(false)
+      }
+    }
+
+    loadProjectsData()
+  }, [session])
+
+  // Create displayProjects that uses real data if available, fallback to mock
+  const displayProjects = useMemo(() => {
+    return projects.length > 0 ? projects : mockProyectos
+  }, [projects, mockProyectos])
 
   // Calculate comprehensive KPIs using real data
-  const projectKPIs = useMemo(() => calculateProjectKPIs(mockProyectos), [mockProyectos])
+  const projectKPIs = useMemo(() => calculateProjectKPIs(displayProjects), [displayProjects])
   const teamKPIs = useMemo(() => ({
     overallProductivity: calculateKPIs.getOverallProductivity(teams),
     teamUtilization: calculateKPIs.getTeamUtilization(teams),
@@ -354,7 +454,7 @@ export default function DashboardPage() {
   }), [teams])
   
   // Real productivity KPIs - customer validated feature  
-  const kpisPersonalizados = role === 'gerencia' ? [
+  const kpisPersonalizados = useMemo(() => role === 'gerencia' ? [
     {
       id: 'kpi-productividad-organizacional',
       titulo: 'Productividad Organizacional',
@@ -541,7 +641,7 @@ export default function DashboardPage() {
     {
       id: 'kpi-pedidos-pendientes',
       titulo: 'Pedidos Pendientes',
-      valor: mockProyectos.reduce((sum, p) => sum + p.materiales.pedidosPendientes, 0),
+      valor: displayProjects.reduce((sum, p) => sum + (p.materiales?.pedidosPendientes || 0), 0),
       tipo: 'numero' as const,
       estado: 'advertencia' as const,
       ultimaActualizacion: new Date().toISOString()
@@ -549,7 +649,7 @@ export default function DashboardPage() {
     {
       id: 'kpi-entregas-semana',
       titulo: 'Entregas Esta Semana',
-      valor: mockProyectos.reduce((sum, p) => sum + p.materiales.entregas, 0),
+      valor: displayProjects.reduce((sum, p) => sum + (p.materiales?.entregas || 0), 0),
       tipo: 'numero' as const,
       estado: 'bueno' as const,
       ultimaActualizacion: new Date().toISOString()
@@ -595,7 +695,7 @@ export default function DashboardPage() {
     {
       id: 'kpi-inspecciones-realizadas',
       titulo: 'Inspecciones Realizadas',
-      valor: mockProyectos.reduce((sum, p) => sum + p.calidad.inspeccionesRealizadas, 0),
+      valor: displayProjects.reduce((sum, p) => sum + p.calidad.inspeccionesRealizadas, 0),
       tipo: 'numero' as const,
       estado: 'bueno' as const,
       descripcion: 'Total acumulado',
@@ -619,10 +719,10 @@ export default function DashboardPage() {
               projectKPIs.avgProgress >= 50 ? 'advertencia' as const : 'critico' as const,
       ultimaActualizacion: new Date().toISOString()
     }
-  ]
+  ], [displayProjects, teamKPIs, projectKPIs, taskMetrics, productivityKPIs, role])
 
   // Generate smart notifications based on real data
-  const generateSmartNotifications = () => {
+  const notificacionesPersonalizadas = useMemo(() => {
     const notifications = []
     
     // Critical stock alerts
@@ -686,14 +786,11 @@ export default function DashboardPage() {
     }
     
     return notifications
-  }
-  
-  // Dynamic notifications based on real data
-  const notificacionesPersonalizadas = generateSmartNotifications()
+  }, [projectKPIs, teamKPIs, role])
 
 
   // Loading state
-  if (teamsLoading || productivityLoading || taskMetricsLoading) {
+  if (teamsLoading || productivityLoading || taskMetricsLoading || projectsLoading) {
     return (
       <ProtectedLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -710,12 +807,12 @@ export default function DashboardPage() {
     <ProtectedLayout>
       <Dashboard 
         usuario={usuario}
-        proyectos={mockProyectos}
+        proyectos={displayProjects}
         kpis={kpisPersonalizados}
         notificaciones={notificacionesPersonalizadas}
         accionesRapidas={mockAccionesRapidas}
-        isLoading={teamsLoading || productivityLoading || taskMetricsLoading}
-        error={teamsError || productivityError || taskMetricsError}
+        isLoading={teamsLoading || productivityLoading || taskMetricsLoading || projectsLoading}
+        error={teamsError || productivityError || taskMetricsError || projectsError}
         ultimaActualizacion={new Date().toISOString()}
       />
     </ProtectedLayout>

@@ -6,6 +6,7 @@ export type {
   Building,
   Floor,
   Unit,
+  Partida,
   ConstructionActivity,
   WorkRecord,
   WorkStatus,

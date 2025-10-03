@@ -98,7 +98,15 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
       label: 'Configuración',
       href: '/settings',
       icon: 'settings'
-    }
+    },
+    // Admin-only menu item
+    ...(normalizedRole === 'admin' || currentUser.role === 'ADMIN' ? [
+      {
+        label: 'Gestión de Usuarios',
+        href: '/admin/users',
+        icon: 'users-cog'
+      }
+    ] : [])
   ]
 
   // Filter navigation items based on user role (more permissive)

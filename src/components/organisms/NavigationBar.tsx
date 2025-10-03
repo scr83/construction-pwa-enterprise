@@ -104,7 +104,7 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
       {
         label: 'Gestión de Usuarios',
         href: '/admin/users',
-        icon: 'users-cog'
+        icon: 'shield'
       }
     ] : [])
   ]

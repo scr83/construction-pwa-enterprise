@@ -99,12 +99,17 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
       href: '/settings',
       icon: 'settings'
     },
-    // Admin-only menu item
+    // Admin-only menu items
     ...(normalizedRole === 'admin' || currentUser.role === 'ADMIN' ? [
       {
         label: 'Gestión de Usuarios',
         href: '/admin/users',
         icon: 'shield'
+      },
+      {
+        label: 'Crear Proyecto',
+        href: '/admin/projects/new',
+        icon: 'plus-circle'
       }
     ] : [])
   ]

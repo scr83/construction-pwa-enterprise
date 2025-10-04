@@ -1,6 +1,24 @@
 # HANDOFF DOCUMENT FOR NEXT SESSION
 ## Construction PWA - Current State & Next Steps
 
+LATEST UPDATE (Oct 4, 2025)
+✅ PROJECT CREATION FEATURE COMPLETED
+
+What was fixed:
+• Architecture error corrected: ConstructionActivities now project-level (40 per project)
+  NOT unit-level (was incorrectly creating 40 × units count)
+
+Files created:
+• /src/app/api/projects/create/route.ts - API endpoint
+• /src/app/admin/projects/new/page.tsx - Multi-step form UI
+
+Verification:
+• QA tested and confirmed: Creates exactly 40 activities per project
+• Works correctly regardless of unit count
+• Build compiles successfully
+
+---
+
 **Last Updated:** October 3, 2025, 20:00 GMT  
 **Last Developer:** Sebastian  
 **Status:** 9 of 10 implementation steps complete, app deployed and functional
@@ -84,10 +102,11 @@ ConstructionActivity
 
 ### High Priority
 
-**1. No Project Creation UI**
-- Cannot create projects through UI
-- Must use Prisma Studio or API directly
-- Blocks testing of all workflow features
+**1. ~~No Project Creation UI~~**
+- ~~Cannot create projects through UI~~
+- ~~Must use Prisma Studio or API directly~~
+- ~~Blocks testing of all workflow features~~
+- ✅ COMPLETED
 
 **2. No Workflow State UI**
 - 14 workflow checkboxes exist in DB but no UI to toggle them

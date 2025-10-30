@@ -21,10 +21,10 @@ export async function GET(
             floors: {
               include: {
                 units: {
-                  orderBy: { code: 'asc' }
+                  orderBy: { name: 'asc' }
                 }
               },
-              orderBy: { floorNumber: 'asc' }
+              orderBy: { name: 'asc' }
             }
           },
           orderBy: { name: 'asc' }

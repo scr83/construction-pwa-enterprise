@@ -56,7 +56,7 @@ export default function ProjectDetailsPage() {
           <Typography variant="h4" className="mb-4">
             Proyecto no encontrado
           </Typography>
-          <Button onClick={() => router.push('/projects')}>
+          <Button onClick={() => router.push('/proyectos')}>
             Volver a Proyectos
           </Button>
         </div>
@@ -74,7 +74,7 @@ export default function ProjectDetailsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push('/projects')}
+                onClick={() => router.push('/proyectos')}
                 leftIcon={<Icon name="arrow-left" size="sm" />}
               >
                 Proyectos

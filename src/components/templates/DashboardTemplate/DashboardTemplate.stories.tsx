@@ -329,7 +329,7 @@ const sampleSections: DashboardSection[] = [
 
 const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: 'home', path: '/', permissions: [] },
-  { id: 'projects', label: 'Proyectos', icon: 'folder', path: '/projects', badge: '5', permissions: [] },
+  { id: 'projects', label: 'Proyectos', icon: 'folder', path: '/proyectos', badge: '5', permissions: [] },
   { id: 'team', label: 'Equipo', icon: 'users', path: '/team', permissions: [] },
   { id: 'materials', label: 'Materiales', icon: 'package', path: '/materials', badge: '2', permissions: [] },
   { id: 'quality', label: 'Calidad', icon: 'shield-check', path: '/quality', permissions: [] },

@@ -48,7 +48,7 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
     },
     {
       label: 'Proyectos', 
-      href: '/projects',
+      href: '/proyectos',
       icon: 'building-2'
     },
     {

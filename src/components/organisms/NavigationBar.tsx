@@ -52,7 +52,7 @@ export function NavigationBar({ currentUser }: NavigationBarProps) {
       icon: 'building-2'
     },
     {
-      label: 'Tareas',
+      label: 'Partidas',
       href: '/tasks',
       icon: 'clipboard-list',
       roles: ['admin', 'gerencia', 'jefe_terreno', 'site_manager', 'oficina_tecnica']

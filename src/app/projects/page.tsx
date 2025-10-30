@@ -3,11 +3,13 @@
 import { ProjectManagement } from '@/components/pages/ProjectManagement'
 import { ProtectedLayout } from '@/components/layouts/ProtectedLayout'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 // Real API integration - no more mock data
 export default function ProjectsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -119,6 +121,11 @@ export default function ProjectsPage() {
       alert('Error al actualizar proyecto')
     }
   }
+
+  // Handle project selection - navigate to project details
+  const handleProjectSelect = (project: any) => {
+    router.push(`/projects/${project.id}`)
+  }
   
   // Real usuario based on session with proper null checks
   const usuario = {
@@ -174,6 +181,7 @@ export default function ProjectsPage() {
         error={error}
         onProyectoCrear={handleProjectCreate}
         onProyectoActualizar={handleProjectUpdate}
+        onProyectoSelect={handleProjectSelect}
       />
     </ProtectedLayout>
   )

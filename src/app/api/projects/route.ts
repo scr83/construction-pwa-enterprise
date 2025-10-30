@@ -85,7 +85,29 @@ export async function GET() {
         status: true,
         startDate: true,
         endDate: true,
-        createdAt: true
+        createdAt: true,
+        _count: {
+          select: {
+            buildings: true,
+            teams: true,
+            constructionActivities: true
+          }
+        },
+        buildings: {
+          select: {
+            id: true,
+            floors: {
+              select: {
+                id: true,
+                units: {
+                  select: {
+                    id: true
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       orderBy: {
         name: 'asc'
@@ -93,7 +115,14 @@ export async function GET() {
     })
 
     // Transform to exact format expected by ProjectManagement component
-    const projects = dbProjects.map(project => ({
+    const projects = dbProjects.map(project => {
+      // Calculate building/floor/unit stats
+      const totalFloors = project.buildings.reduce((sum, building) => sum + building.floors.length, 0)
+      const totalUnits = project.buildings.reduce((sum, building) => 
+        sum + building.floors.reduce((floorSum, floor) => floorSum + floor.units.length, 0), 0
+      )
+      
+      return ({
       id: project.id,
       nombre: project.name, // Changed from titulo to nombre
       codigo: `${project.projectType.toUpperCase()}-${project.id.slice(-3)}`,
@@ -194,6 +223,14 @@ export async function GET() {
         }
       ],
       
+      // Stats for project cards
+      _count: project._count,
+      stats: {
+        totalFloors,
+        totalUnits,
+        completionPercentage: 0 // Will be calculated later based on completed activities
+      },
+      
       // Metadata object
       metadata: {
         creadoPor: session.user.email || 'sistema@constructora.cl',
@@ -203,7 +240,8 @@ export async function GET() {
         fotos: Math.floor(Math.random() * 50) + 25,
         documentos: Math.floor(Math.random() * 15) + 8
       }
-    }))
+    })
+    })
 
     return NextResponse.json({ projects })
 

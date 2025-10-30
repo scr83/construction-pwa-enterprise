@@ -1,0 +1,1 @@
+export { EstructuraTab } from './EstructuraTab'

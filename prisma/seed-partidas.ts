@@ -32,7 +32,7 @@ const partidas = [
   { name: 'Pavimento spc', category: 'Pavimentos', sequence: 27, budgetWeight: 2.8 },
   { name: 'Pavimento alfombra', category: 'Pavimentos', sequence: 28, budgetWeight: 2.5 },
   { name: 'Artefactos y griferias', category: 'Instalaciones', sequence: 29, budgetWeight: 2.2 },
-  { name: 'Cermico revestimiento interior', category: 'Revestimientos', sequence: 30, budgetWeight: 2.8 },
+  { name: 'Ceramico revestimiento interior', category: 'Revestimientos', sequence: 30, budgetWeight: 2.8 },
   { name: 'Guardapolvos y cubrejuntas', category: 'Terminaciones', sequence: 31, budgetWeight: 1.5 },
   { name: 'Muebles y closets', category: 'Terminaciones', sequence: 32, budgetWeight: 3.0 },
   { name: 'Cableado, artefactado y tablero', category: 'Instalaciones', sequence: 33, budgetWeight: 2.5 },

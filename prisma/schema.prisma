@@ -48,25 +48,25 @@ model User {
   email         String    @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
-  password      String?   // For credentials authentication
+  password      String? // For credentials authentication
   role          UserRole  @default(SITE_MANAGER)
-  company       String?   // Company name
-  phone         String?   // Phone number
+  company       String? // Company name
+  phone         String? // Phone number
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  accounts           Account[]
-  sessions           Session[]
-  projectAssignments ProjectAssignment[]
-  workRecords        WorkRecord[]
-  qualityRecords     QualityRecord[]
-  paymentRecords     PaymentRecord[]
-  supervisedTeams    Team[] @relation("TeamSupervisor")
-  teamMemberships    TeamMember[] @relation("TeamMemberUser")
+  accounts            Account[]
+  sessions            Session[]
+  projectAssignments  ProjectAssignment[]
+  workRecords         WorkRecord[]
+  qualityRecords      QualityRecord[]
+  paymentRecords      PaymentRecord[]
+  supervisedTeams     Team[]              @relation("TeamSupervisor")
+  teamMemberships     TeamMember[]        @relation("TeamMemberUser")
   productivityRecords DailyProductivity[] @relation("ProductivityRecorder")
-  assignedTasks      Task[] @relation("TaskAssignee")
-  createdTasks       Task[] @relation("TaskCreatedBy")
+  assignedTasks       Task[]              @relation("TaskAssignee")
+  createdTasks        Task[]              @relation("TaskCreatedBy")
 
   @@map("users")
 }
@@ -84,21 +84,21 @@ model VerificationToken {
 
 // Project Hierarchy Models
 model Project {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
-  projectType String   @map("project_type") // residential, commercial, industrial, infrastructure
-  status      String   @default("PLANNING") // PLANNING, ACTIVE, COMPLETED, CANCELLED
-  startDate   DateTime @map("start_date")
+  projectType String    @map("project_type") // residential, commercial, industrial, infrastructure
+  status      String    @default("PLANNING") // PLANNING, ACTIVE, COMPLETED, CANCELLED
+  startDate   DateTime  @map("start_date")
   endDate     DateTime? @map("end_date")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  buildings           Building[]
-  projectAssignments  ProjectAssignment[]
+  buildings              Building[]
+  projectAssignments     ProjectAssignment[]
   constructionActivities ConstructionActivity[]
-  teams               Team[]
-  tasks               Task[]
+  teams                  Team[]
+  tasks                  Task[]
 
   @@map("projects")
 }
@@ -106,7 +106,7 @@ model Project {
 model Building {
   id        String   @id @default(cuid())
   projectId String   @map("project_id")
-  name      String   // Building A, Phase 1, Tower North
+  name      String // Building A, Phase 1, Tower North
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -119,7 +119,7 @@ model Building {
 model Floor {
   id         String   @id @default(cuid())
   buildingId String   @map("building_id")
-  name       String   // Floor 1, Section A, Wing East
+  name       String // Floor 1, Section A, Wing East
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
@@ -132,29 +132,34 @@ model Floor {
 model Unit {
   id        String   @id @default(cuid())
   floorId   String   @map("floor_id")
-  name      String   // Unit 101, EA-1, Suite A
+  name      String // Unit 101, EA-1, Suite A
   unitType  String?  @map("unit_type") // apartment, house, office, retail, warehouse
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  floor       Floor         @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  floor       Floor        @relation(fields: [floorId], references: [id], onDelete: Cascade)
   workRecords WorkRecord[]
 
   @@map("units")
 }
 
-// Phase 1: Partida Model for Chilean Construction Activities
+// Construction Activities (Partidas) - Standard Chilean Construction Tasks
 model Partida {
-  id           String @id @default(cuid())
-  name         String
-  category     String
-  sequence     Int
-  budgetWeight Float? @map("budget_weight")
+  id           String   @id @default(cuid())
+  name         String   @unique // e.g., "Trazado y niveles"
+  category     String // Fundaciones, Estructura, Instalaciones, Revestimientos, etc.
+  sequence     Int      @unique // Execution order: 1-40
+  budgetWeight Float? // Typical budget percentage allocation
+  unit         String? // m2, m3, kg, un, ml, pto (measurement unit)
+  description  String? // Additional details about the activity
+  isActive     Boolean  @default(true) // For future use
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
-  
+
   constructionActivities ConstructionActivity[]
-  
+
+  @@index([category])
+  @@index([sequence])
   @@map("partidas")
 }
 
@@ -163,31 +168,31 @@ model ConstructionActivity {
   id          String   @id @default(cuid())
   projectId   String   @map("project_id")
   partidaId   String   @map("partida_id")
-  name        String   // Partida name
+  name        String // Partida name
   description String?
-  sequence    Int      // Order in construction process
+  sequence    Int // Order in construction process
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  
+
   // Phase 1: Chilean Construction Workflow Fields
-  kitMaterialInicial       Boolean @default(false) @map("kit_material_inicial")
-  kitMaterialAjustado      Boolean @default(false) @map("kit_material_ajustado")
-  faenaContratada          Boolean @default(false) @map("faena_contratada")
-  subcontratoAsignado      Boolean @default(false) @map("subcontrato_asignado")
-  kitInicialCotizado       Boolean @default(false) @map("kit_inicial_cotizado")
-  solpedInicialEmitida     Boolean @default(false) @map("solped_inicial_emitida")
-  kitComprado              Boolean @default(false) @map("kit_comprado")
-  kitDisponibleBodega      Boolean @default(false) @map("kit_disponible_bodega")
-  kitEntregadoTerreno      Boolean @default(false) @map("kit_entregado_terreno")
-  faenaEjecutada           Boolean @default(false) @map("faena_ejecutada")
-  entregadoCalidad         Boolean @default(false) @map("entregado_calidad")
-  tratoPagado              Boolean @default(false) @map("trato_pagado")
-  pagoCursado              Boolean @default(false) @map("pago_cursado")
-  fechaEjecucion           DateTime? @map("fecha_ejecucion")
-  
+  kitMaterialInicial   Boolean   @default(false) @map("kit_material_inicial")
+  kitMaterialAjustado  Boolean   @default(false) @map("kit_material_ajustado")
+  faenaContratada      Boolean   @default(false) @map("faena_contratada")
+  subcontratoAsignado  Boolean   @default(false) @map("subcontrato_asignado")
+  kitInicialCotizado   Boolean   @default(false) @map("kit_inicial_cotizado")
+  solpedInicialEmitida Boolean   @default(false) @map("solped_inicial_emitida")
+  kitComprado          Boolean   @default(false) @map("kit_comprado")
+  kitDisponibleBodega  Boolean   @default(false) @map("kit_disponible_bodega")
+  kitEntregadoTerreno  Boolean   @default(false) @map("kit_entregado_terreno")
+  faenaEjecutada       Boolean   @default(false) @map("faena_ejecutada")
+  entregadoCalidad     Boolean   @default(false) @map("entregado_calidad")
+  tratoPagado          Boolean   @default(false) @map("trato_pagado")
+  pagoCursado          Boolean   @default(false) @map("pago_cursado")
+  fechaEjecucion       DateTime? @map("fecha_ejecucion")
+
   // Phase 1: Weekly tracking fields
-  completedThisWeek        Boolean @default(false) @map("completed_this_week")
-  weekNumber               Int? @map("week_number")
+  completedThisWeek Boolean @default(false) @map("completed_this_week")
+  weekNumber        Int?    @map("week_number")
 
   project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   partida     Partida      @relation(fields: [partidaId], references: [id], onDelete: Cascade)
@@ -197,26 +202,26 @@ model ConstructionActivity {
 }
 
 model WorkRecord {
-  id                    String   @id @default(cuid())
-  unitId                String   @map("unit_id")
-  constructionActivityId String  @map("construction_activity_id")
-  userId                String   @map("user_id") // Who recorded the work
-  status                WorkStatus @default(ASSIGNED)
-  executionDate         DateTime? @map("execution_date")
-  quantity              Decimal?
-  notes                 String?
-  latitude              Decimal? // GPS coordinates
-  longitude             Decimal?
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id                     String     @id @default(cuid())
+  unitId                 String     @map("unit_id")
+  constructionActivityId String     @map("construction_activity_id")
+  userId                 String     @map("user_id") // Who recorded the work
+  status                 WorkStatus @default(ASSIGNED)
+  executionDate          DateTime?  @map("execution_date")
+  quantity               Decimal?
+  notes                  String?
+  latitude               Decimal? // GPS coordinates
+  longitude              Decimal?
+  createdAt              DateTime   @default(now()) @map("created_at")
+  updatedAt              DateTime   @updatedAt @map("updated_at")
 
-  unit                Unit                @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unit                 Unit                 @relation(fields: [unitId], references: [id], onDelete: Cascade)
   constructionActivity ConstructionActivity @relation(fields: [constructionActivityId], references: [id], onDelete: Cascade)
-  user                User                @relation(fields: [userId], references: [id])
-  materialRecords     MaterialRecord[]
-  qualityRecords      QualityRecord[]
-  paymentRecords      PaymentRecord[]
-  photos              Photo[]
+  user                 User                 @relation(fields: [userId], references: [id])
+  materialRecords      MaterialRecord[]
+  qualityRecords       QualityRecord[]
+  paymentRecords       PaymentRecord[]
+  photos               Photo[]
 
   @@map("work_records")
 }
@@ -225,17 +230,17 @@ model WorkRecord {
 
 // Material Management Models
 model MaterialRecord {
-  id           String   @id @default(cuid())
-  workRecordId String   @map("work_record_id")
-  materialName String   @map("material_name")
+  id           String         @id @default(cuid())
+  workRecordId String         @map("work_record_id")
+  materialName String         @map("material_name")
   quantity     Decimal
-  unit         String   // m2, m3, kg, units, etc.
+  unit         String // m2, m3, kg, units, etc.
   status       MaterialStatus @default(PLANNED)
   cost         Decimal?
   supplier     String?
-  deliveryDate DateTime? @map("delivery_date")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  deliveryDate DateTime?      @map("delivery_date")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
 
   workRecord WorkRecord @relation(fields: [workRecordId], references: [id], onDelete: Cascade)
 
@@ -246,15 +251,15 @@ model MaterialRecord {
 
 // Quality Control Models
 model QualityRecord {
-  id             String   @id @default(cuid())
-  workRecordId   String   @map("work_record_id")
-  userId         String   @map("user_id") // Quality inspector
+  id             String        @id @default(cuid())
+  workRecordId   String        @map("work_record_id")
+  userId         String        @map("user_id") // Quality inspector
   status         QualityStatus @default(PENDING)
-  inspectionDate DateTime? @map("inspection_date")
+  inspectionDate DateTime?     @map("inspection_date")
   notes          String?
-  checklist      String?  // Flexible checklist structure as JSON string
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  checklist      String? // Flexible checklist structure as JSON string
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
 
   workRecord WorkRecord @relation(fields: [workRecordId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id])
@@ -267,15 +272,15 @@ model QualityRecord {
 
 // Payment Models
 model PaymentRecord {
-  id           String   @id @default(cuid())
-  workRecordId String   @map("work_record_id")
-  userId       String   @map("user_id") // Who authorized payment
+  id           String        @id @default(cuid())
+  workRecordId String        @map("work_record_id")
+  userId       String        @map("user_id") // Who authorized payment
   amount       Decimal
-  paymentDate  DateTime? @map("payment_date")
+  paymentDate  DateTime?     @map("payment_date")
   status       PaymentStatus @default(PENDING)
   notes        String?
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
 
   workRecord WorkRecord @relation(fields: [workRecordId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id])
@@ -287,15 +292,15 @@ model PaymentRecord {
 
 // File Management Models
 model Photo {
-  id             String   @id @default(cuid())
-  workRecordId   String?  @map("work_record_id")
-  qualityRecordId String? @map("quality_record_id")
-  filename       String
-  url            String
-  description    String?
-  latitude       Decimal? // GPS coordinates
-  longitude      Decimal?
-  createdAt      DateTime @default(now()) @map("created_at")
+  id              String   @id @default(cuid())
+  workRecordId    String?  @map("work_record_id")
+  qualityRecordId String?  @map("quality_record_id")
+  filename        String
+  url             String
+  description     String?
+  latitude        Decimal? // GPS coordinates
+  longitude       Decimal?
+  createdAt       DateTime @default(now()) @map("created_at")
 
   workRecord    WorkRecord?    @relation(fields: [workRecordId], references: [id], onDelete: Cascade)
   qualityRecord QualityRecord? @relation(fields: [qualityRecordId], references: [id], onDelete: Cascade)
@@ -308,7 +313,7 @@ model ProjectAssignment {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
   projectId String   @map("project_id")
-  role      String   // Role within this specific project
+  role      String // Role within this specific project
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -321,114 +326,114 @@ model ProjectAssignment {
 
 // Chilean Construction Team Management Models
 model Team {
-  id          String   @id @default(cuid())
-  name        String
-  type        String   // 'estructuras', 'instalaciones', 'terminaciones', 'calidad'
-  projectId   String   @map("project_id")
-  supervisorId String  @map("supervisor_id")
-  status      String   @default("active") // 'active', 'inactive', 'on_break'
-  specialties String[] // Array of specialties
-  productivityTarget Decimal @default(100.00) @map("productivity_target")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  
+  id                 String   @id @default(cuid())
+  name               String
+  type               String // 'estructuras', 'instalaciones', 'terminaciones', 'calidad'
+  projectId          String   @map("project_id")
+  supervisorId       String   @map("supervisor_id")
+  status             String   @default("active") // 'active', 'inactive', 'on_break'
+  specialties        String[] // Array of specialties
+  productivityTarget Decimal  @default(100.00) @map("productivity_target")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
   // Relations
-  project     Project  @relation(fields: [projectId], references: [id])
-  supervisor  User     @relation("TeamSupervisor", fields: [supervisorId], references: [id])
-  members     TeamMember[]
+  project      Project             @relation(fields: [projectId], references: [id])
+  supervisor   User                @relation("TeamSupervisor", fields: [supervisorId], references: [id])
+  members      TeamMember[]
   productivity DailyProductivity[]
-  metrics     TeamMetrics[]
-  
+  metrics      TeamMetrics[]
+
   @@map("teams")
 }
 
 model TeamMember {
-  id          String   @id @default(cuid())
-  teamId      String   @map("team_id")
-  userId      String   @map("user_id")
-  role        String   // 'maestro_mayor', 'maestro_albanil', 'oficial_primera', 'ayudante', 'jornal'
-  hourlyRate  Decimal? @map("hourly_rate")
-  joinedDate  DateTime @default(now()) @map("joined_date")
-  status      String   @default("active")
-  performanceRating Decimal @default(0.00) @map("performance_rating")
-  
+  id                String   @id @default(cuid())
+  teamId            String   @map("team_id")
+  userId            String   @map("user_id")
+  role              String // 'maestro_mayor', 'maestro_albanil', 'oficial_primera', 'ayudante', 'jornal'
+  hourlyRate        Decimal? @map("hourly_rate")
+  joinedDate        DateTime @default(now()) @map("joined_date")
+  status            String   @default("active")
+  performanceRating Decimal  @default(0.00) @map("performance_rating")
+
   // Relations
-  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user        User     @relation("TeamMemberUser", fields: [userId], references: [id])
-  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation("TeamMemberUser", fields: [userId], references: [id])
+
   @@unique([teamId, userId])
   @@map("team_members")
 }
 
 model DailyProductivity {
-  id            String   @id @default(cuid())
-  teamId        String   @map("team_id")
-  date          DateTime
-  hoursWorked   Decimal  @map("hours_worked")
-  tasksCompleted Int     @default(0) @map("tasks_completed")
-  unitsCompleted Int     @default(0) @map("units_completed")
+  id                String   @id @default(cuid())
+  teamId            String   @map("team_id")
+  date              DateTime
+  hoursWorked       Decimal  @map("hours_worked")
+  tasksCompleted    Int      @default(0) @map("tasks_completed")
+  unitsCompleted    Int      @default(0) @map("units_completed")
   productivityScore Decimal? @map("productivity_score")
-  qualityScore  Decimal? @map("quality_score")
-  safetyIncidents Int    @default(0) @map("safety_incidents")
-  notes         String?
-  recordedBy    String   @map("recorded_by")
-  createdAt     DateTime @default(now()) @map("created_at")
-  
+  qualityScore      Decimal? @map("quality_score")
+  safetyIncidents   Int      @default(0) @map("safety_incidents")
+  notes             String?
+  recordedBy        String   @map("recorded_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
   // Relations
-  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  recorder      User     @relation("ProductivityRecorder", fields: [recordedBy], references: [id])
-  
+  team     Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  recorder User @relation("ProductivityRecorder", fields: [recordedBy], references: [id])
+
   @@unique([teamId, date])
   @@map("daily_productivity")
 }
 
 model TeamMetrics {
-  id                String   @id @default(cuid())
-  teamId            String   @map("team_id")
-  week              DateTime // Start of week
-  avgProductivity   Decimal  @default(0.00) @map("avg_productivity")
-  avgQualityScore   Decimal  @default(0.00) @map("avg_quality_score")
-  attendanceRate    Decimal  @default(0.00) @map("attendance_rate")
-  safetyScore       Decimal  @default(0.00) @map("safety_score")
-  tasksCompleted    Int      @default(0) @map("tasks_completed")
-  costEfficiency    Decimal  @default(0.00) @map("cost_efficiency")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  
+  id              String   @id @default(cuid())
+  teamId          String   @map("team_id")
+  week            DateTime // Start of week
+  avgProductivity Decimal  @default(0.00) @map("avg_productivity")
+  avgQualityScore Decimal  @default(0.00) @map("avg_quality_score")
+  attendanceRate  Decimal  @default(0.00) @map("attendance_rate")
+  safetyScore     Decimal  @default(0.00) @map("safety_score")
+  tasksCompleted  Int      @default(0) @map("tasks_completed")
+  costEfficiency  Decimal  @default(0.00) @map("cost_efficiency")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
   // Relations
-  team              Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
   @@unique([teamId, week])
   @@map("team_metrics")
 }
 
 // Task Management Models
 model Task {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  assigneeId  String      @map("assignee_id")
-  assignee    User        @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  createdById String      @map("created_by_id")
-  createdBy   User        @relation("TaskCreatedBy", fields: [createdById], references: [id])
-  projectId   String      @map("project_id")
-  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  status      TaskStatus  @default(PENDING)
-  priority    TaskPriority @default(MEDIUM)
-  category    TaskCategory @default(GENERAL)
-  dueDate     DateTime?   @map("due_date")
-  startDate   DateTime?   @map("start_date")
-  completedAt DateTime?   @map("completed_at")
-  estimatedHours Int?     @map("estimated_hours")
-  actualHours Int?        @map("actual_hours")
-  building    String?     // Building name/identifier
-  unit        String?     // Unit name/identifier
-  partida     String?     // Construction activity name
-  materials   String[]    // Array of required materials
-  prerequisites String[]  // Array of prerequisites
-  notes       String?
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  id             String       @id @default(cuid())
+  title          String
+  description    String?
+  assigneeId     String       @map("assignee_id")
+  assignee       User         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdById    String       @map("created_by_id")
+  createdBy      User         @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  projectId      String       @map("project_id")
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status         TaskStatus   @default(PENDING)
+  priority       TaskPriority @default(MEDIUM)
+  category       TaskCategory @default(GENERAL)
+  dueDate        DateTime?    @map("due_date")
+  startDate      DateTime?    @map("start_date")
+  completedAt    DateTime?    @map("completed_at")
+  estimatedHours Int?         @map("estimated_hours")
+  actualHours    Int?         @map("actual_hours")
+  building       String? // Building name/identifier
+  unit           String? // Unit name/identifier
+  partida        String? // Construction activity name
+  materials      String[] // Array of required materials
+  prerequisites  String[] // Array of prerequisites
+  notes          String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
 
   @@map("tasks")
 }
@@ -450,11 +455,11 @@ enum TaskPriority {
 
 enum TaskCategory {
   GENERAL
-  STRUCTURE        // estructura
-  MATERIALS        // materiales
-  QUALITY          // calidad
-  INSTALLATIONS    // instalaciones
-  FINISHES         // acabados
+  STRUCTURE // estructura
+  MATERIALS // materiales
+  QUALITY // calidad
+  INSTALLATIONS // instalaciones
+  FINISHES // acabados
   TECHNICAL_OFFICE // oficina_tecnica
 }
 

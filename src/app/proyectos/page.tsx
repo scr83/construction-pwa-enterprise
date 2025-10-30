@@ -124,7 +124,7 @@ export default function ProjectsPage() {
 
   // Handle project selection - navigate to project details
   const handleProjectSelect = (project: any) => {
-    router.push(`/projects/${project.id}`)
+    router.push(`/proyectos/${project.id}`)
   }
   
   // Real usuario based on session with proper null checks
